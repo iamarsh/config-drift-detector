@@ -12,3 +12,10 @@
 - No credentials stored in codebase
 - Supabase RLS policies enforce data access control
 
+
+## Monitoring and Observability
+- CloudWatch Logs for Lambda execution traces
+- Structured logging with Pino for better searchability
+- Slack notifications for drift alerts
+- Frontend error boundary for graceful degradation
+
