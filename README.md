@@ -350,3 +350,10 @@ Built with assistance from Claude (Anthropic)
 ## Status
 ![Production](https://img.shields.io/badge/status-production-success)
 
+
+## Use Cases
+- **Security Auditing**: Track unauthorized security group changes
+- **Compliance**: Monitor configuration drift for audit trails
+- **Change Management**: Verify intended changes were applied correctly
+- **Incident Response**: Quickly identify what changed before an incident
+
