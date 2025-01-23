@@ -357,3 +357,10 @@ Built with assistance from Claude (Anthropic)
 - **Change Management**: Verify intended changes were applied correctly
 - **Incident Response**: Quickly identify what changed before an incident
 
+
+## Troubleshooting
+- **No drifts detected**: Verify EventBridge schedulers are enabled
+- **Slack alerts not working**: Check webhook URL in environment variables
+- **Dashboard not loading**: Verify Supabase connection and RLS policies
+- **Lambda timeouts**: Check CloudWatch Logs for specific error messages
+
