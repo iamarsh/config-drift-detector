@@ -30,3 +30,7 @@ coverage/
 # Misc
 *.tsbuildinfo
 .turbo/
+
+# Documentation and AI conversations (local only)
+memory-bank/
+CLAUDE.md
