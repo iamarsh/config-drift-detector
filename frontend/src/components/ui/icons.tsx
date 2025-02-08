@@ -10,6 +10,7 @@ export {
   Database,
   Menu,
   X,
+  TrendingUp,
 
   // Theme icons
   Sun,

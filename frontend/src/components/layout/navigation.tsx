@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, AlertTriangle, Database, Menu } from '@/components/ui/icons'
+import { Home, AlertTriangle, Database, Menu, TrendingUp } from '@/components/ui/icons'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { MobileMenu } from './mobile-menu'
 
@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Drifts', href: '/drifts', icon: AlertTriangle },
   { name: 'Baselines', href: '/baselines', icon: Database },
+  { name: 'Trends', href: '/trends', icon: TrendingUp },
 ]
 
 /**

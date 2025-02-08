@@ -49,9 +49,8 @@ export default function DriftsPage() {
     }
   }, [filters])
 
+  // Separate useEffect for WebSocket subscriptions (runs once on mount)
   useEffect(() => {
-    fetchDrifts()
-
     // Subscribe to real-time drift events
     const channel = supabase
       .channel('drift_events_changes_drifts_page')
@@ -100,7 +99,8 @@ export default function DriftsPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchDrifts, addToast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
