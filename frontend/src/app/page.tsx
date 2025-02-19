@@ -40,10 +40,13 @@ export default function Home() {
     }
   }, [])
 
+  // Initial data fetch
   useEffect(() => {
-    // Initial fetch
     fetchDrifts()
+  }, [fetchDrifts])
 
+  // Separate useEffect for WebSocket subscriptions (runs once on mount)
+  useEffect(() => {
     // Set up Realtime subscription
     const channel = supabase
       .channel('drift_events_changes')
@@ -90,7 +93,8 @@ export default function Home() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchDrifts, addToast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
