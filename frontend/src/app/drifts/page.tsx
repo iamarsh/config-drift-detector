@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase-client'
 import { DriftTable } from '../../components/drift-table'
-import { DriftEvent } from '../page'
 import { ToastContainer, useToast } from '../../components/toast'
+import {
+  useDrifts,
+  useAddDriftToCache,
+  useUpdateDriftInCache,
+  type DriftEvent,
+} from '../../hooks/useDrifts'
 
 export default function DriftsPage() {
-  const [drifts, setDrifts] = useState<DriftEvent[]>([])
-  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     severity: 'all',
     type: 'all',
@@ -16,42 +19,19 @@ export default function DriftsPage() {
   })
   const { toasts, addToast, dismissToast } = useToast()
 
-  const fetchDrifts = useCallback(async () => {
-    try {
-      setLoading(true)
+  // Use React Query for data fetching - automatic caching based on filters
+  const {
+    data: drifts = [],
+    isLoading,
+    refetch,
+  } = useDrifts(filters)
 
-      let query = supabase
-        .from('drift_events')
-        .select('*')
-        .order('detected_at', { ascending: false })
+  // Optimistic cache update hooks for WebSocket events
+  const addDriftToCache = useAddDriftToCache()
+  const updateDriftInCache = useUpdateDriftInCache()
 
-      if (filters.severity !== 'all') {
-        query = query.eq('severity', filters.severity)
-      }
-
-      if (filters.type !== 'all') {
-        query = query.eq('resource_type', filters.type)
-      }
-
-      if (filters.acknowledged !== 'all') {
-        query = query.eq('acknowledged', filters.acknowledged === 'true')
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      setDrifts(data || [])
-    } catch (error) {
-      console.error('Error fetching drifts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters])
-
-  // Separate useEffect for WebSocket subscriptions (runs once on mount)
+  // WebSocket subscriptions (runs once on mount)
   useEffect(() => {
-    // Subscribe to real-time drift events
     const channel = supabase
       .channel('drift_events_changes_drifts_page')
       .on(
@@ -74,8 +54,8 @@ export default function DriftsPage() {
             })
           }
 
-          // Re-fetch to respect current filters
-          fetchDrifts()
+          // Add to cache and let React Query handle filtering
+          addDriftToCache(newDrift)
         }
       )
       .on(
@@ -87,11 +67,8 @@ export default function DriftsPage() {
         },
         (payload) => {
           const updatedDrift = payload.new as DriftEvent
-          setDrifts((prevDrifts) =>
-            prevDrifts.map((drift) =>
-              drift.id === updatedDrift.id ? updatedDrift : drift
-            )
-          )
+          // Update in cache optimistically
+          updateDriftInCache(updatedDrift)
         }
       )
       .subscribe()
@@ -113,71 +90,71 @@ export default function DriftsPage() {
           </p>
         </div>
 
-      <div className="mb-6 bg-surface shadow rounded-lg p-4 border border-border">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
-              Severity
-            </label>
-            <select
-              value={filters.severity}
-              onChange={(e) =>
-                setFilters({ ...filters, severity: e.target.value })
-              }
-              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
-            >
-              <option value="all">All</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-          </div>
+        <div className="mb-6 bg-surface shadow rounded-lg p-4 border border-border">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Severity
+              </label>
+              <select
+                value={filters.severity}
+                onChange={(e) =>
+                  setFilters({ ...filters, severity: e.target.value })
+                }
+                className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
+              >
+                <option value="all">All</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
-              Resource Type
-            </label>
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
-            >
-              <option value="all">All</option>
-              <option value="EC2">EC2</option>
-              <option value="SecurityGroup">Security Group</option>
-              <option value="RDS">RDS</option>
-              <option value="S3">S3</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Resource Type
+              </label>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
+              >
+                <option value="all">All</option>
+                <option value="EC2">EC2</option>
+                <option value="SecurityGroup">Security Group</option>
+                <option value="RDS">RDS</option>
+                <option value="S3">S3</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
-              Status
-            </label>
-            <select
-              value={filters.acknowledged}
-              onChange={(e) =>
-                setFilters({ ...filters, acknowledged: e.target.value })
-              }
-              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
-            >
-              <option value="all">All</option>
-              <option value="false">Pending</option>
-              <option value="true">Acknowledged</option>
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Status
+              </label>
+              <select
+                value={filters.acknowledged}
+                onChange={(e) =>
+                  setFilters({ ...filters, acknowledged: e.target.value })
+                }
+                className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
+              >
+                <option value="all">All</option>
+                <option value="false">Pending</option>
+                <option value="true">Acknowledged</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aws-orange"></div>
-          <p className="mt-2 text-sm text-text-secondary">Loading...</p>
-        </div>
-      ) : (
-        <DriftTable drifts={drifts} onDriftAcknowledged={() => fetchDrifts()} />
-      )}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aws-orange"></div>
+            <p className="mt-2 text-sm text-text-secondary">Loading...</p>
+          </div>
+        ) : (
+          <DriftTable drifts={drifts} onDriftAcknowledged={() => refetch()} />
+        )}
       </div>
     </>
   )

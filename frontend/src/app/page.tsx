@@ -1,67 +1,49 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabase-client'
 import { SummaryCards } from '../components/summary-cards'
 import { DriftTable } from '../components/drift-table'
 import { ToastContainer, useToast } from '../components/toast'
+import {
+  useDrifts,
+  useAddDriftToCache,
+  useUpdateDriftInCache,
+  type DriftEvent,
+} from '../hooks/useDrifts'
 
-export interface DriftEvent {
-  id: string
-  account_id: string
-  resource_id: string
-  resource_type: string
-  change_type: string
-  severity: string
-  detected_at: string
-  acknowledged: boolean
-}
+export type { DriftEvent }
 
 export default function Home() {
-  const [drifts, setDrifts] = useState<DriftEvent[]>([])
-  const [loading, setLoading] = useState(true)
   const { toasts, addToast, dismissToast } = useToast()
 
-  const fetchDrifts = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('drift_events')
-        .select('*')
-        .order('detected_at', { ascending: false })
-        .limit(20)
+  // Use React Query for data fetching - automatic caching and deduplication
+  const {
+    data: drifts = [],
+    isLoading,
+    refetch,
+  } = useDrifts({ limit: 20 })
 
-      if (error) throw error
+  // Optimistic cache update hooks for WebSocket events
+  const addDriftToCache = useAddDriftToCache()
+  const updateDriftInCache = useUpdateDriftInCache()
 
-      setDrifts(data || [])
-    } catch (error) {
-      console.error('Error fetching drifts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Initial data fetch
+  // WebSocket subscriptions (runs once on mount)
   useEffect(() => {
-    fetchDrifts()
-  }, [fetchDrifts])
-
-  // Separate useEffect for WebSocket subscriptions (runs once on mount)
-  useEffect(() => {
-    // Set up Realtime subscription
     const channel = supabase
-      .channel('drift_events_changes')
+      .channel('drift_events_changes_dashboard')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'drift_events'
+          table: 'drift_events',
         },
         (payload) => {
           const newDrift = payload.new as DriftEvent
 
-          // Add to drifts list
-          setDrifts((prevDrifts) => [newDrift, ...prevDrifts.slice(0, 19)])
+          // Add to cache optimistically
+          addDriftToCache(newDrift)
 
           // Show toast notification for HIGH/CRITICAL drifts
           if (newDrift.severity === 'HIGH' || newDrift.severity === 'CRITICAL') {
@@ -69,7 +51,7 @@ export default function Home() {
               title: `${newDrift.severity} Drift Detected!`,
               message: `${newDrift.resource_type}: ${newDrift.resource_id} (${newDrift.change_type})`,
               type: newDrift.severity === 'CRITICAL' ? 'error' : 'warning',
-              duration: 10000
+              duration: 10000,
             })
           }
         }
@@ -79,13 +61,12 @@ export default function Home() {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'drift_events'
+          table: 'drift_events',
         },
         (payload) => {
           const updatedDrift = payload.new as DriftEvent
-          setDrifts((prevDrifts) =>
-            prevDrifts.map((drift) => (drift.id === updatedDrift.id ? updatedDrift : drift))
-          )
+          // Update in cache optimistically
+          updateDriftInCache(updatedDrift)
         }
       )
       .subscribe()
@@ -113,13 +94,13 @@ export default function Home() {
           <h3 className="text-lg font-semibold text-text-primary mb-4">
             Recent Drift Events
           </h3>
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aws-orange"></div>
               <p className="mt-2 text-sm text-text-secondary">Loading...</p>
             </div>
           ) : (
-            <DriftTable drifts={drifts} onDriftAcknowledged={() => fetchDrifts()} />
+            <DriftTable drifts={drifts} onDriftAcknowledged={() => refetch()} />
           )}
         </div>
       </div>
