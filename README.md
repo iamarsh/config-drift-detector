@@ -172,12 +172,12 @@ cd ../frontend && npm run build
 **Backend** (`backend/.env.local`):
 ```bash
 # AWS Configuration
-AWS_REGION=us-east-2
-AWS_ACCOUNT_ID=218885889357
-S3_BUCKET_NAME=config-drift-snapshots-218885889357
+AWS_REGION=us-east-1
+AWS_ACCOUNT_ID=your-aws-account-id
+S3_BUCKET_NAME=your-s3-bucket-name
 
 # Supabase Configuration
-SUPABASE_URL=https://yhwlsztdlxixrdycpedg.supabase.co
+SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # Slack Webhook
@@ -186,7 +186,7 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 
 **Frontend** (`frontend/.env.local`):
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://yhwlsztdlxixrdycpedg.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
@@ -396,10 +396,10 @@ aws cloudwatch get-metric-statistics \
 aws events list-rules --name-prefix config-drift-detector
 
 # Check S3 snapshot freshness
-aws s3 ls s3://config-drift-snapshots-218885889357/ --recursive --human-readable | tail -n 5
+aws s3 ls s3://your-s3-bucket-name/ --recursive --human-readable | tail -n 5
 
 # Supabase connection test
-curl https://yhwlsztdlxixrdycpedg.supabase.co/rest/v1/drift_events?limit=1 \
+curl https://your-project.supabase.co/rest/v1/drift_events?limit=1 \
   -H "apikey: $SUPABASE_ANON_KEY"
 ```
 
@@ -417,40 +417,45 @@ curl https://yhwlsztdlxixrdycpedg.supabase.co/rest/v1/drift_events?limit=1 \
 
 ## Cost Optimization
 
-### Monthly Cost Breakdown
+### Monthly Cost Breakdown (Optimized)
 
 ```
 AWS Lambda:
-  - Invocations: 8,928/month (every 30 min × 3 functions)
-  - Duration: 30s avg × 512MB
-  - Cost: ~$4.50/month
+  - Invocations: 2,160/month (hourly × 3 functions × 24h × 30d)
+  - Memory: 256MB snapshot + 512MB detect + 128MB alert
+  - Duration: 20s avg per function
+  - Cost: ~$0.80/month
 
 AWS S3:
-  - Storage: 50GB (6 months retention)
-  - Requests: 8,928 PUTs + 8,928 GETs
-  - Cost: ~$1.50/month
+  - Storage: 10GB (30-day retention with lifecycle policy)
+  - Requests: 2,160 PUTs + 2,160 GETs
+  - Cost: ~$0.30/month
 
 AWS EventBridge:
-  - Events: 8,928/month
+  - Events: 2,160/month
   - Cost: $0 (under free tier)
 
 Supabase:
   - Free tier: 500MB database, 1GB storage
-  - Cost: $0/month (upgrade to Pro at $25 if exceeded)
+  - Cost: $0/month
 
 Vercel:
   - Free tier: 100GB bandwidth, unlimited requests
   - Cost: $0/month
 
-Total: ~$6/month (AWS only)
+Total: ~$1.10/month (AWS only)
 ```
 
-### Cost Reduction Strategies
+### Cost Optimization Applied
 
-1. **Snapshot Frequency**: Reduce to 60-minute intervals → 50% cost reduction
-2. **S3 Lifecycle Policies**: Move to Glacier after 30 days → 80% storage savings
-3. **Lambda Memory**: Right-size based on CloudWatch metrics
-4. **Reserved Capacity**: Use Savings Plans for predictable workloads
+1. ✅ **Hourly Monitoring**: Changed from 30-min to 60-min intervals (50% reduction)
+2. ✅ **Right-sized Memory**:
+   - Snapshot: 256MB (lightweight EC2/SG queries)
+   - Detect: 512MB (needs memory for diff computation)
+   - Alert: 128MB (simple DB query + HTTP call)
+3. ✅ **Reduced Timeouts**: 60s/90s/30s instead of 300s across the board
+4. ⏳ **S3 Lifecycle**: Move to Glacier after 30 days (can add later)
+5. ⏳ **Reserved Capacity**: Not needed at this scale
 
 ---
 
