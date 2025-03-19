@@ -5,52 +5,58 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs20.x
-  region: ${env:AWS_REGION, 'us-east-2'}
+  region: ${env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  memorySize: 512
-  timeout: 300
+  memorySize: 256  # Reduced from 512MB to optimize cost (50% savings)
+  timeout: 120     # Reduced from 300s to 120s (still plenty for most operations)
 
   environment:
-    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID, '218885889357'}
-    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}
-    SUPABASE_URL: ${env:SUPABASE_URL, 'https://yhwlsztdlxixrdycpedg.supabase.co'}
-    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY, 'placeholder'}
-    SLACK_WEBHOOK_URL: ${env:SLACK_WEBHOOK_URL, 'placeholder'}
+    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+    SUPABASE_URL: ${env:SUPABASE_URL}
+    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+    SLACK_WEBHOOK_URL: ${env:SLACK_WEBHOOK_URL}
     NODE_ENV: ${env:NODE_ENV, 'production'}
     LOG_LEVEL: ${env:LOG_LEVEL, 'info'}
 
   iam:
-    role: arn:aws:iam::218885889357:role/lambda-config-drift-detector-role
+    role: ${env:LAMBDA_ROLE_ARN}
 
 functions:
   snapshot:
     handler: dist/lambdas/snapshot.handler
     description: Take periodic snapshots of AWS resources
+    memorySize: 256
+    timeout: 60
     events:
       - schedule:
           name: ${self:service}-${self:provider.stage}-snapshot-schedule
-          description: Trigger snapshot every 30 minutes
-          rate: cron(0,30 * * * ? *)
+          description: Trigger snapshot every hour
+          rate: cron(0 * * * ? *)  # Every hour at :00 (was every 30 min)
           enabled: true
 
   detect:
     handler: dist/lambdas/detect.handler
     description: Detect configuration drift by comparing snapshots
+    memorySize: 512  # Needs more memory for diff computation
+    timeout: 90
     events:
       - schedule:
           name: ${self:service}-${self:provider.stage}-detect-schedule
           description: Trigger drift detection 5 minutes after snapshot
-          rate: cron(5,35 * * * ? *)
+          rate: cron(5 * * * ? *)  # Every hour at :05 (was every 30 min)
           enabled: true
 
   alert:
     handler: dist/lambdas/alert.handler
     description: Send Slack alerts for HIGH/CRITICAL drift
+    memorySize: 128  # Minimal memory needed for simple query + HTTP call
+    timeout: 30
     events:
       - schedule:
           name: ${self:service}-${self:provider.stage}-alert-schedule
           description: Trigger alerts 10 minutes after snapshot
-          rate: cron(10,40 * * * ? *)
+          rate: cron(10 * * * ? *)  # Every hour at :10 (was every 30 min)
           enabled: true
 
 plugins:
