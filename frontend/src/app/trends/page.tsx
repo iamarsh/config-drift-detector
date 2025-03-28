@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase-client'
 import {
+  useDriftTrends,
+  useAddDriftToCache,
+  useUpdateDriftInCache,
+  type DriftEvent,
+} from '../../hooks/useDrifts'
+import {
   LineChart,
   Line,
   BarChart,
@@ -17,15 +23,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-
-interface DriftEvent {
-  id: string
-  resource_id: string
-  resource_type: string
-  change_type: string
-  severity: string
-  detected_at: string
-}
 
 interface TimeSeriesData {
   date: string
@@ -47,37 +44,23 @@ interface SeverityData {
 }
 
 export default function TrendsPage() {
-  const [drifts, setDrifts] = useState<DriftEvent[]>([])
-  const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
 
-  useEffect(() => {
-    fetchDrifts()
-  }, [timeRange])
+  // Calculate daysAgo from timeRange
+  const daysAgo = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
 
-  async function fetchDrifts() {
-    try {
-      setLoading(true)
+  // Use React Query hook for data fetching
+  const {
+    data: drifts = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useDriftTrends(daysAgo)
 
-      const daysAgo = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - daysAgo)
-
-      const { data, error } = await supabase
-        .from('drift_events')
-        .select('*')
-        .gte('detected_at', startDate.toISOString())
-        .order('detected_at', { ascending: true })
-
-      if (error) throw error
-
-      setDrifts(data || [])
-    } catch (error) {
-      console.error('Error fetching drifts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Optimistic cache update hooks for WebSocket events
+  const addDriftToCache = useAddDriftToCache()
+  const updateDriftInCache = useUpdateDriftInCache()
 
   // Process time series data
   const timeSeriesData: TimeSeriesData[] = (() => {
@@ -162,7 +145,7 @@ export default function TrendsPage() {
     LOW: '#22c55e',
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
