@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase-client'
 import {
   useDriftTrends,
@@ -62,8 +62,8 @@ export default function TrendsPage() {
   const addDriftToCache = useAddDriftToCache()
   const updateDriftInCache = useUpdateDriftInCache()
 
-  // Process time series data
-  const timeSeriesData: TimeSeriesData[] = (() => {
+  // Process time series data - MEMOIZED to prevent recalculation on every render
+  const timeSeriesData: TimeSeriesData[] = useMemo(() => {
     const dataMap = new Map<string, TimeSeriesData>()
 
     drifts.forEach((drift) => {
@@ -89,10 +89,10 @@ export default function TrendsPage() {
     })
 
     return Array.from(dataMap.values())
-  })()
+  }, [drifts])
 
-  // Process resource type breakdown
-  const resourceTypeData: ResourceTypeData[] = (() => {
+  // Process resource type breakdown - MEMOIZED
+  const resourceTypeData: ResourceTypeData[] = useMemo(() => {
     const typeMap = new Map<string, number>()
 
     drifts.forEach((drift) => {
@@ -103,10 +103,10 @@ export default function TrendsPage() {
     return Array.from(typeMap.entries())
       .map(([resourceType, count]) => ({ resourceType, count }))
       .sort((a, b) => b.count - a.count)
-  })()
+  }, [drifts])
 
-  // Process severity breakdown
-  const severityData: SeverityData[] = (() => {
+  // Process severity breakdown - MEMOIZED
+  const severityData: SeverityData[] = useMemo(() => {
     const severityMap = new Map<string, number>()
 
     drifts.forEach((drift) => {
@@ -120,10 +120,10 @@ export default function TrendsPage() {
         severity,
         count: severityMap.get(severity) || 0,
       }))
-  })()
+  }, [drifts])
 
-  // Top drifting resources
-  const topResources = (() => {
+  // Top drifting resources - MEMOIZED
+  const topResources = useMemo(() => {
     const resourceMap = new Map<string, number>()
 
     drifts.forEach((drift) => {
@@ -136,7 +136,7 @@ export default function TrendsPage() {
       .map(([resource, count]) => ({ resource, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
-  })()
+  }, [drifts])
 
   const COLORS = {
     CRITICAL: '#ef4444',
