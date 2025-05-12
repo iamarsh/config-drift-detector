@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle, RefreshCw } from '@/components/ui/icons'
+import { logger } from '@/lib/logger'
 
 /**
  * Global Error Boundary for the application
@@ -22,7 +23,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log error to monitoring service (e.g., Sentry, DataDog)
-    console.error('Application error:', error)
+    logger.error('Application error:', error)
 
     // Check if it's a chunk loading error (dynamic import failure)
     if (

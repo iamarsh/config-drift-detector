@@ -547,6 +547,7 @@ All permissions are scoped to read-only operations except for S3 snapshot storag
 - **XSS Prevention**: React automatic escaping, CSP headers
 - **Authentication**: Supabase Row-Level Security (RLS) policies
 - **CORS**: Whitelist-based origin validation
+- **Production Logging**: Environment-aware logger prevents infrastructure details from leaking to browser console
 
 ### Compliance
 - **GDPR**: No PII stored, data residency controls

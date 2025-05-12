@@ -3,6 +3,8 @@
  * Handles dynamic import failures and provides auto-recovery mechanisms
  */
 
+import { logger } from './logger'
+
 /**
  * Detects if an error is a chunk loading error (dynamic import failure)
  */
@@ -29,7 +31,7 @@ export function handleChunkLoadError(error: Error): void {
     return
   }
 
-  console.warn('Chunk loading error detected, attempting recovery...', error)
+  logger.warn('Chunk loading error detected, attempting recovery...', error)
 
   const reloadKey = 'chunk-error-reload-timestamp'
   const lastReload = sessionStorage.getItem(reloadKey)
@@ -50,7 +52,7 @@ export function handleChunkLoadError(error: Error): void {
       globalThis.location.reload()
     }
   } else {
-    console.error('Chunk loading error persists after reload')
+    logger.error('Chunk loading error persists after reload')
     // Let the error boundary handle it
     throw error
   }
@@ -71,7 +73,7 @@ export async function safeImport<T>(
       return await importFn()
     } catch (error) {
       lastError = error as Error
-      console.warn(`Import attempt ${i + 1}/${retries} failed:`, error)
+      logger.warn(`Import attempt ${i + 1}/${retries} failed:`, error)
 
       // Wait before retry (exponential backoff)
       if (i < retries - 1) {
@@ -100,7 +102,7 @@ export function setupGlobalErrorHandlers(): void {
   // Handle unhandled promise rejections (like failed dynamic imports)
   window.addEventListener('unhandledrejection', (event) => {
     if (event.reason instanceof Error && isChunkLoadError(event.reason)) {
-      console.warn('Unhandled chunk loading error:', event.reason)
+      logger.warn('Unhandled chunk loading error:', event.reason)
       event.preventDefault() // Prevent default error logging
       handleChunkLoadError(event.reason)
     }
@@ -109,7 +111,7 @@ export function setupGlobalErrorHandlers(): void {
   // Handle module loading errors
   window.addEventListener('error', (event) => {
     if (event.error instanceof Error && isChunkLoadError(event.error)) {
-      console.warn('Global chunk loading error:', event.error)
+      logger.warn('Global chunk loading error:', event.error)
       event.preventDefault()
       handleChunkLoadError(event.error)
     }
@@ -147,13 +149,13 @@ export async function checkForUpdates(): Promise<boolean> {
     }
 
     if (buildId && storedBuildId && buildId !== storedBuildId) {
-      console.log('New app version detected:', buildId)
+      logger.info('New app version detected:', buildId)
       return true
     }
 
     return false
   } catch (error) {
-    console.warn('Failed to check for updates:', error)
+    logger.warn('Failed to check for updates:', error)
     return false
   }
 }

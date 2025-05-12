@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase-client'
 import { formatTimestamp } from '../../lib/utils'
+import { logger } from '../../lib/logger'
 
 interface Baseline {
   id: string
@@ -40,7 +41,7 @@ export default function BaselinesPage() {
       setBaselines(data || [])
       setBaseline(data && data.length > 0 ? data[0] : null)
     } catch (error) {
-      console.error('Error fetching baselines:', error)
+      logger.error('Error fetching baselines:', error)
       setBaselines([])
       setBaseline(null)
     } finally {

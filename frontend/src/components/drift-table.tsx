@@ -1,6 +1,7 @@
 import { DriftEvent } from '../app/page'
 import { formatTimestamp, getSeverityColor, getChangeTypeColor } from '../lib/utils'
 import { supabase } from '../lib/supabase-client'
+import { logger } from '../lib/logger'
 import { useState } from 'react'
 
 interface DriftTableProps {
@@ -25,7 +26,7 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
       // Notify parent component to refresh data
       onDriftAcknowledged?.(driftId)
     } catch (error) {
-      console.error('Error acknowledging drift:', error)
+      logger.error('Error acknowledging drift:', error)
       alert('Failed to acknowledge drift. Please try again.')
     } finally {
       setAcknowledging(prev => {
