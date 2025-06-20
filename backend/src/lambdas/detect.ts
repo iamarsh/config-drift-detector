@@ -1,5 +1,6 @@
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { SupabaseClient } from '../shared/supabase-client.js';
+import { AwsClient } from '../shared/aws-client.js';
 import { createLogger } from '../shared/logger.js';
 import { DetectionResult, AwsSnapshot } from '../shared/types.js';
 import { computeDiff } from '../shared/utils.js';
@@ -128,19 +129,18 @@ async function getLatestSnapshotFromS3(
   bucketName: string
 ): Promise<AwsSnapshot | null> {
   try {
-    // List all objects in the bucket
-    const listCommand = new ListObjectsV2Command({
-      Bucket: bucketName,
-    });
+    // Use AwsClient for paginated S3 listing (handles >1000 objects)
+    const awsClient = new AwsClient();
+    const allObjects = await awsClient.listAllS3Objects(bucketName);
 
-    const listResponse = await s3Client.send(listCommand);
-
-    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+    if (allObjects.length === 0) {
       return null;
     }
 
+    logger.info({ totalObjects: allObjects.length }, 'All S3 objects retrieved with pagination');
+
     // Sort by key (descending) to get the latest
-    const sortedObjects = listResponse.Contents.sort((a, b) => {
+    const sortedObjects = allObjects.sort((a, b) => {
       const keyA = a.Key || '';
       const keyB = b.Key || '';
       return keyB.localeCompare(keyA);

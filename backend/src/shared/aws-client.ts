@@ -13,12 +13,14 @@ import {
 import {
   S3Client,
   ListBucketsCommand,
+  ListObjectsV2Command,
   GetBucketTaggingCommand,
   GetBucketVersioningCommand,
   GetBucketEncryptionCommand,
   GetBucketLifecycleConfigurationCommand,
   GetPublicAccessBlockCommand,
   type Bucket,
+  type _Object,
 } from '@aws-sdk/client-s3';
 import { createLogger } from './logger.js';
 import { AwsResource, AwsSnapshot, ResourceType } from './types.js';
@@ -150,6 +152,93 @@ export class AwsClient {
       return buckets;
     } catch (error) {
       logger.error({ error }, 'Failed to fetch S3 buckets');
+      throw error;
+    }
+  }
+
+  /**
+   * Retry a function with exponential backoff
+   * Handles transient AWS API failures gracefully
+   *
+   * @param fn - The async function to retry
+   * @param maxRetries - Maximum number of retry attempts (default: 3)
+   * @param initialDelay - Initial delay in milliseconds (default: 1000)
+   * @returns The result of the successful function call
+   */
+  async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 3,
+    initialDelay: number = 1000
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+
+        if (attempt < maxRetries) {
+          const delay = initialDelay * Math.pow(2, attempt);
+          logger.warn(
+            { attempt: attempt + 1, maxRetries, delay, error },
+            'Retrying after error'
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    logger.error({ maxRetries, error: lastError }, 'Max retries exceeded');
+    throw lastError || new Error('Max retries exceeded');
+  }
+
+  /**
+   * List all objects in an S3 bucket with automatic pagination
+   * AWS limits ListObjectsV2 to 1000 objects per response
+   *
+   * @param bucketName - The S3 bucket name
+   * @param prefix - Optional prefix filter
+   * @returns Array of all S3 objects in the bucket
+   */
+  async listAllS3Objects(bucketName: string, prefix?: string): Promise<_Object[]> {
+    const allObjects: _Object[] = [];
+    let continuationToken: string | undefined;
+
+    try {
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        });
+
+        const response = await this.retryWithBackoff(() => this.s3Client.send(command));
+
+        if (response.Contents) {
+          allObjects.push(...response.Contents);
+        }
+
+        continuationToken = response.NextContinuationToken;
+
+        logger.debug(
+          {
+            currentBatch: response.Contents?.length || 0,
+            totalSoFar: allObjects.length,
+            hasMore: !!continuationToken,
+          },
+          'Fetched S3 objects batch'
+        );
+      } while (continuationToken);
+
+      logger.info(
+        { bucketName, prefix, totalObjects: allObjects.length },
+        'All S3 objects listed'
+      );
+
+      return allObjects;
+    } catch (error) {
+      logger.error({ error, bucketName, prefix }, 'Failed to list all S3 objects');
       throw error;
     }
   }

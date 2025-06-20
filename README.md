@@ -498,6 +498,15 @@ Total: ~$1.10/month (AWS only)
 | Snapshot Capture | < 30s | ~25s | ✅ |
 | Drift Detection | < 60s | ~45s | ✅ |
 | WebSocket Latency | < 100ms | ~50ms | ✅ |
+| S3 Snapshot Pagination | Unlimited | >1000 objects | ✅ |
+
+### Reliability Features
+
+**AWS API Resilience:**
+- **Exponential Backoff Retry**: All AWS API calls automatically retry on transient failures (throttling, timeouts, 500-series errors)
+- **Retry Strategy**: 3 attempts with exponential delays (1s → 2s → 4s)
+- **S3 Pagination**: Automatic pagination handles unlimited snapshot history (no 1000-object limit)
+- **Structured Logging**: Retry attempts and pagination progress logged for debugging
 
 ---
 
