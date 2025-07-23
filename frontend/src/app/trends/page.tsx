@@ -62,6 +62,43 @@ export default function TrendsPage() {
   const addDriftToCache = useAddDriftToCache()
   const updateDriftInCache = useUpdateDriftInCache()
 
+  // WebSocket subscriptions (runs once on mount)
+  useEffect(() => {
+    const channel = supabase
+      .channel('drift_events_changes_trends_page')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'drift_events',
+        },
+        (payload) => {
+          const newDrift = payload.new as DriftEvent
+          // Add to cache optimistically
+          addDriftToCache(newDrift)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drift_events',
+        },
+        (payload) => {
+          const updatedDrift = payload.new as DriftEvent
+          updateDriftInCache(updatedDrift)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty deps - run once on mount
+
   // Process time series data - MEMOIZED to prevent recalculation on every render
   const timeSeriesData: TimeSeriesData[] = useMemo(() => {
     const dataMap = new Map<string, TimeSeriesData>()
