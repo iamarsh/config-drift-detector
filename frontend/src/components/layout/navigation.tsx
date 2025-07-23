@@ -9,7 +9,11 @@ import { MobileMenu } from './mobile-menu'
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Drifts', href: '/drifts', icon: AlertTriangle },
+  { name: 'Drifts', href: '/drifts', icon: AlertTriangle, subItems: [
+    { name: 'All Drifts', href: '/drifts' },
+    { name: 'RDS Drifts', href: '/drifts/rds' },
+    { name: 'S3 Drifts', href: '/drifts/s3' },
+  ]},
   { name: 'Baselines', href: '/baselines', icon: Database },
   { name: 'Trends', href: '/trends', icon: TrendingUp },
 ]
