@@ -1,6 +1,8 @@
 # Config Drift Detector
 
 [![Production](https://img.shields.io/badge/status-production-success)](https://config-drift-detector.vercel.app/)
+[![Test Coverage](https://img.shields.io/badge/coverage-~70%25-yellow)](https://github.com/iamarsh/config-drift-detector)
+[![Tests](https://img.shields.io/badge/tests-17%20passing-success)](https://github.com/iamarsh/config-drift-detector)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-FF9900?logo=amazon-aws)](https://aws.amazon.com/lambda/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
