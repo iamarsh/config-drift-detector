@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { Navigation } from '@/components/layout/navigation'
 import { Footer } from '@/components/layout/footer'
+import { ErrorRecoveryScript } from '@/components/error-recovery-script'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <ErrorRecoveryScript />
         <QueryProvider>
           <ThemeProvider
             attribute="class"
