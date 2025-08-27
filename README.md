@@ -510,6 +510,37 @@ Total: ~$1.10/month (AWS only)
 - **Network Isolation**: Lambda VPC integration available
 - **Audit Logging**: CloudTrail tracks all AWS API calls
 
+#### Required IAM Permissions
+
+The Lambda execution role needs the following read-only permissions for resource monitoring:
+
+**EC2 (for instance and security group monitoring):**
+- `ec2:DescribeInstances`
+- `ec2:DescribeSecurityGroups`
+- `ec2:DescribeSecurityGroupRules`
+- `ec2:DescribeNetworkInterfaces`
+- `ec2:DescribeVolumes`
+
+**RDS (for database instance monitoring):**
+- `rds:DescribeDBInstances`
+- `rds:DescribeDBClusters`
+- `rds:ListTagsForResource`
+
+**S3 (for bucket configuration monitoring):**
+- `s3:ListAllMyBuckets`
+- `s3:GetBucketTagging`
+- `s3:GetBucketVersioning`
+- `s3:GetBucketEncryption`
+- `s3:GetBucketLifecycleConfiguration`
+- `s3:GetPublicAccessBlock`
+
+**S3 (for snapshot storage):**
+- `s3:GetObject`
+- `s3:PutObject`
+- `s3:ListBucket` (on snapshot bucket only)
+
+All permissions are scoped to read-only operations except for S3 snapshot storage. Use `Resource: '*'` for EC2/RDS/S3 monitoring as resources are dynamic.
+
 ### Application Security
 - **Input Validation**: Strict TypeScript types, runtime schema validation
 - **SQL Injection**: Parameterized queries via Supabase client
