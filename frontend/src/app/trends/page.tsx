@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase-client'
+import { ToastContainer, useToast } from '../../components/toast'
 import {
   useDriftTrends,
   useAddDriftToCache,
@@ -45,6 +46,7 @@ interface SeverityData {
 
 export default function TrendsPage() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
+  const { toasts, addToast, dismissToast } = useToast()
 
   // Calculate daysAgo from timeRange
   const daysAgo = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
@@ -75,8 +77,19 @@ export default function TrendsPage() {
         },
         (payload) => {
           const newDrift = payload.new as DriftEvent
+
           // Add to cache optimistically
           addDriftToCache(newDrift)
+
+          // Show toast notification for HIGH/CRITICAL drifts
+          if (newDrift.severity === 'HIGH' || newDrift.severity === 'CRITICAL') {
+            addToast({
+              title: `${newDrift.severity} Drift Detected!`,
+              message: `${newDrift.resource_type}: ${newDrift.resource_id} (${newDrift.change_type})`,
+              type: newDrift.severity === 'CRITICAL' ? 'error' : 'warning',
+              duration: 10000,
+            })
+          }
         }
       )
       .on(
@@ -227,9 +240,11 @@ export default function TrendsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+    <>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-text-primary">Drift Trends & Analytics</h2>
           <p className="mt-1 text-sm text-text-secondary">
@@ -413,6 +428,7 @@ export default function TrendsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
