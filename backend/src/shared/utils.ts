@@ -202,6 +202,45 @@ export function computeSeverity(
     }
   }
 
+  // S3-specific severity rules
+  if (drift.resourceType === ResourceType.S3) {
+    if (drift.changeType === ChangeType.REMOVED) {
+      return Severity.MEDIUM; // Bucket removal, but data may be backed up
+    }
+
+    if (drift.changeType === ChangeType.MODIFIED) {
+      const changedFields = getChangedFields(
+        previousResource?.state,
+        currentResource?.state
+      );
+
+      // Public access changes are critical (security exposure)
+      if (changedFields.some(f => f.includes('publicAccessBlock'))) {
+        return Severity.CRITICAL;
+      }
+
+      // Encryption changes affect data security
+      if (changedFields.some(f => f.includes('encryption'))) {
+        return Severity.HIGH;
+      }
+
+      // Versioning changes affect data recovery
+      if (changedFields.some(f => f.includes('versioning'))) {
+        return Severity.HIGH;
+      }
+
+      // Lifecycle policy changes affect data retention
+      if (changedFields.some(f => f.includes('lifecycle'))) {
+        return Severity.MEDIUM;
+      }
+
+      // Tag changes are informational
+      if (changedFields.length === 1 && changedFields[0] === 'tags') {
+        return Severity.LOW;
+      }
+    }
+  }
+
   // Default severity
   return Severity.MEDIUM;
 }
