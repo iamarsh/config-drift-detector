@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
  * React Query Provider Component
@@ -46,6 +46,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         },
       })
   )
+
+  // Periodically clear stale queries to prevent memory leaks
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.clear() // Clear cache periodically
+    }, 600000) // Every 10 minutes
+
+    return () => clearInterval(interval)
+  }, [queryClient])
 
   return (
     <QueryClientProvider client={queryClient}>

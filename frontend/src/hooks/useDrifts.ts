@@ -56,9 +56,9 @@ export function useDrifts(filters: DriftFilters = {}) {
         query = query.eq('acknowledged', filters.acknowledged === 'true')
       }
 
-      if (filters.limit) {
-        query = query.limit(filters.limit)
-      }
+      // Apply default pagination limit to prevent excessive memory usage
+      const limit = filters.limit || 500
+      query = query.limit(limit)
 
       const { data, error } = await query
 
@@ -91,6 +91,7 @@ export function useDriftTrends(daysAgo: number = 30) {
         .select('*')
         .gte('detected_at', startDate.toISOString())
         .order('detected_at', { ascending: true })
+        .limit(5000) // Limit to prevent excessive memory usage
 
       if (error) throw error
 

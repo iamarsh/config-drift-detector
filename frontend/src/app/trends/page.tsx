@@ -64,7 +64,7 @@ export default function TrendsPage() {
   const addDriftToCache = useAddDriftToCache()
   const updateDriftInCache = useUpdateDriftInCache()
 
-  // WebSocket subscriptions (runs once on mount)
+  // WebSocket subscriptions with proper cleanup
   useEffect(() => {
     const channel = supabase
       .channel('drift_events_changes_trends_page')
@@ -106,11 +106,12 @@ export default function TrendsPage() {
       )
       .subscribe()
 
+    // Cleanup function to unsubscribe and remove channel
     return () => {
+      channel.unsubscribe()
       supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty deps - run once on mount
+  }, [addDriftToCache, updateDriftInCache, addToast])
 
   // Process time series data - MEMOIZED to prevent recalculation on every render
   const timeSeriesData: TimeSeriesData[] = useMemo(() => {
