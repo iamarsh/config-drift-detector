@@ -157,20 +157,28 @@ export class AwsClient {
   async getAllSnapshots(): Promise<AwsSnapshot> {
     logger.info('Starting complete AWS snapshot');
 
-    const [ec2Instances, securityGroups] = await Promise.all([
+    const [ec2Instances, securityGroups, rdsInstances, s3Buckets] = await Promise.all([
       this.snapshotEC2(),
       this.snapshotSecurityGroups(),
+      this.snapshotRDS(),
+      this.snapshotS3(),
     ]);
 
     const snapshot: AwsSnapshot = {
       accountId: this.accountId,
       region: this.region,
       timestamp: new Date().toISOString(),
-      resources: [...ec2Instances, ...securityGroups],
+      resources: [...ec2Instances, ...securityGroups, ...rdsInstances, ...s3Buckets],
     };
 
     logger.info(
-      { totalResources: snapshot.resources.length },
+      {
+        ec2Count: ec2Instances.length,
+        sgCount: securityGroups.length,
+        rdsCount: rdsInstances.length,
+        s3Count: s3Buckets.length,
+        totalResources: snapshot.resources.length
+      },
       'Complete snapshot created'
     );
 
