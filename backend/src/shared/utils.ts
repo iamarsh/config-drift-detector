@@ -10,6 +10,22 @@ import {
 
 const logger = createLogger('utils');
 
+/**
+ * Extract list of changed fields between two states
+ */
+function getChangedFields(oldState: any, newState: any): string[] {
+  const changed: string[] = [];
+  const allKeys = new Set([...Object.keys(oldState || {}), ...Object.keys(newState || {})]);
+
+  for (const key of allKeys) {
+    if (JSON.stringify(oldState?.[key]) !== JSON.stringify(newState?.[key])) {
+      changed.push(key);
+    }
+  }
+
+  return changed;
+}
+
 export function computeDiff(
   baseline: AwsSnapshot,
   latest: AwsSnapshot
@@ -144,6 +160,46 @@ export function computeSeverity(
   // EC2 removal is HIGH severity
   if (drift.resourceType === ResourceType.EC2 && drift.changeType === ChangeType.REMOVED) {
     return Severity.HIGH;
+  }
+
+  // RDS-specific severity rules
+  if (drift.resourceType === ResourceType.RDS) {
+    if (drift.changeType === ChangeType.REMOVED) {
+      return Severity.HIGH; // Database removal is serious
+    }
+
+    if (drift.changeType === ChangeType.MODIFIED) {
+      const changedFields = getChangedFields(
+        previousResource?.state,
+        currentResource?.state
+      );
+
+      // Engine changes are critical (incompatible upgrades)
+      if (changedFields.includes('engine') || changedFields.includes('engineVersion')) {
+        return Severity.CRITICAL;
+      }
+
+      // Instance class/storage changes affect performance
+      if (changedFields.includes('instanceClass') || changedFields.includes('allocatedStorage')) {
+        return Severity.HIGH;
+      }
+
+      // Multi-AZ changes affect availability
+      if (changedFields.includes('multiAZ')) {
+        return Severity.HIGH;
+      }
+
+      // Backup configuration changes affect disaster recovery
+      if (changedFields.includes('backupRetentionPeriod') ||
+          changedFields.includes('preferredBackupWindow')) {
+        return Severity.MEDIUM;
+      }
+
+      // Status changes (running → stopped)
+      if (changedFields.includes('status')) {
+        return Severity.MEDIUM;
+      }
+    }
   }
 
   // Default severity
