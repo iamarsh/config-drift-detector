@@ -5,6 +5,11 @@ import {
   Instance,
   SecurityGroup,
 } from '@aws-sdk/client-ec2';
+import {
+  RDSClient,
+  DescribeDBInstancesCommand,
+  type DBInstance,
+} from '@aws-sdk/client-rds';
 import { createLogger } from './logger.js';
 import { AwsResource, AwsSnapshot, ResourceType } from './types.js';
 
@@ -12,6 +17,7 @@ const logger = createLogger('aws-client');
 
 export class AwsClient {
   private ec2Client: EC2Client;
+  private rdsClient: RDSClient;
   private region: string;
   private accountId: string;
 
@@ -20,6 +26,7 @@ export class AwsClient {
     this.accountId = process.env.AWS_ACCOUNT_ID || '';
 
     this.ec2Client = new EC2Client({ region: this.region });
+    this.rdsClient = new RDSClient({ region: this.region });
 
     logger.info({ region: this.region, accountId: this.accountId }, 'AWS client initialized');
   }
@@ -62,6 +69,33 @@ export class AwsClient {
       return securityGroups;
     } catch (error) {
       logger.error({ error }, 'Failed to fetch Security Groups');
+      throw error;
+    }
+  }
+
+  /**
+   * Capture RDS DB instance configurations
+   */
+  async snapshotRDS(): Promise<AwsResource[]> {
+    try {
+      logger.info('Fetching RDS instances');
+
+      const command = new DescribeDBInstancesCommand({});
+      const response = await this.rdsClient.send(command);
+
+      if (!response.DBInstances || response.DBInstances.length === 0) {
+        logger.info('No RDS instances found');
+        return [];
+      }
+
+      const instances: AwsResource[] = response.DBInstances.map((instance: DBInstance) =>
+        this.mapRDSInstance(instance)
+      );
+
+      logger.info({ count: instances.length }, 'RDS instances fetched');
+      return instances;
+    } catch (error) {
+      logger.error({ error }, 'Failed to fetch RDS instances');
       throw error;
     }
   }
@@ -155,6 +189,44 @@ export class AwsClient {
           ipv6Ranges: rule.Ipv6Ranges?.map((r) => r.CidrIpv6),
           userIdGroupPairs: rule.UserIdGroupPairs?.map((p) => p.GroupId),
         })),
+      },
+      tags,
+      region: this.region,
+      accountId: this.accountId,
+    };
+  }
+
+  private mapRDSInstance(instance: DBInstance): AwsResource {
+    const tags: Record<string, string> = {};
+
+    for (const tag of instance.TagList || []) {
+      if (tag.Key && tag.Value) {
+        tags[tag.Key] = tag.Value;
+      }
+    }
+
+    return {
+      id: instance.DBInstanceIdentifier || 'unknown',
+      type: ResourceType.RDS,
+      name: tags['Name'] || instance.DBInstanceIdentifier || 'unknown',
+      state: {
+        // Basic config
+        instanceClass: instance.DBInstanceClass,
+        engine: instance.Engine,
+        engineVersion: instance.EngineVersion,
+        allocatedStorage: instance.AllocatedStorage,
+        storageType: instance.StorageType,
+
+        // Availability
+        multiAZ: instance.MultiAZ,
+        availabilityZone: instance.AvailabilityZone,
+        status: instance.DBInstanceStatus,
+
+        // Backup config
+        backupRetentionPeriod: instance.BackupRetentionPeriod,
+        preferredBackupWindow: instance.PreferredBackupWindow,
+        preferredMaintenanceWindow: instance.PreferredMaintenanceWindow,
+        autoMinorVersionUpgrade: instance.AutoMinorVersionUpgrade,
       },
       tags,
       region: this.region,
