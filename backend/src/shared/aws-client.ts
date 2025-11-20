@@ -10,6 +10,16 @@ import {
   DescribeDBInstancesCommand,
   type DBInstance,
 } from '@aws-sdk/client-rds';
+import {
+  S3Client,
+  ListBucketsCommand,
+  GetBucketTaggingCommand,
+  GetBucketVersioningCommand,
+  GetBucketEncryptionCommand,
+  GetBucketLifecycleConfigurationCommand,
+  GetPublicAccessBlockCommand,
+  type Bucket,
+} from '@aws-sdk/client-s3';
 import { createLogger } from './logger.js';
 import { AwsResource, AwsSnapshot, ResourceType } from './types.js';
 
@@ -18,6 +28,7 @@ const logger = createLogger('aws-client');
 export class AwsClient {
   private ec2Client: EC2Client;
   private rdsClient: RDSClient;
+  private s3Client: S3Client;
   private region: string;
   private accountId: string;
 
@@ -27,6 +38,7 @@ export class AwsClient {
 
     this.ec2Client = new EC2Client({ region: this.region });
     this.rdsClient = new RDSClient({ region: this.region });
+    this.s3Client = new S3Client({ region: this.region });
 
     logger.info({ region: this.region, accountId: this.accountId }, 'AWS client initialized');
   }
@@ -96,6 +108,48 @@ export class AwsClient {
       return instances;
     } catch (error) {
       logger.error({ error }, 'Failed to fetch RDS instances');
+      throw error;
+    }
+  }
+
+  /**
+   * Capture S3 bucket configurations
+   */
+  async snapshotS3(): Promise<AwsResource[]> {
+    try {
+      logger.info('Fetching S3 buckets');
+
+      // List all buckets
+      const listCommand = new ListBucketsCommand({});
+      const listResponse = await this.s3Client.send(listCommand);
+
+      if (!listResponse.Buckets || listResponse.Buckets.length === 0) {
+        logger.info('No S3 buckets found');
+        return [];
+      }
+
+      // Fetch config for each bucket in parallel
+      const buckets = await Promise.all(
+        listResponse.Buckets.map(async (bucket: Bucket) => {
+          const bucketName = bucket.Name!;
+
+          // Fetch bucket configurations (handle errors gracefully)
+          const [versioning, encryption, lifecycle, publicAccess, tags] = await Promise.allSettled([
+            this.s3Client.send(new GetBucketVersioningCommand({ Bucket: bucketName })),
+            this.s3Client.send(new GetBucketEncryptionCommand({ Bucket: bucketName })),
+            this.s3Client.send(new GetBucketLifecycleConfigurationCommand({ Bucket: bucketName })),
+            this.s3Client.send(new GetPublicAccessBlockCommand({ Bucket: bucketName })),
+            this.s3Client.send(new GetBucketTaggingCommand({ Bucket: bucketName })),
+          ]);
+
+          return this.mapS3Bucket(bucket, { versioning, encryption, lifecycle, publicAccess, tags });
+        })
+      );
+
+      logger.info({ count: buckets.length }, 'S3 buckets fetched');
+      return buckets;
+    } catch (error) {
+      logger.error({ error }, 'Failed to fetch S3 buckets');
       throw error;
     }
   }
@@ -227,6 +281,55 @@ export class AwsClient {
         preferredBackupWindow: instance.PreferredBackupWindow,
         preferredMaintenanceWindow: instance.PreferredMaintenanceWindow,
         autoMinorVersionUpgrade: instance.AutoMinorVersionUpgrade,
+      },
+      tags,
+      region: this.region,
+      accountId: this.accountId,
+    };
+  }
+
+  private mapS3Bucket(bucket: Bucket, configs: any): AwsResource {
+    const tags: Record<string, string> = configs.tags.status === 'fulfilled' ?
+      configs.tags.value.TagSet?.reduce((acc: Record<string, string>, tag: any) => {
+        if (tag.Key) acc[tag.Key] = tag.Value || '';
+        return acc;
+      }, {} as Record<string, string>) : {};
+
+    return {
+      id: bucket.Name || 'unknown',
+      type: ResourceType.S3,
+      name: tags['Name'] || bucket.Name || 'unknown',
+      state: {
+        creationDate: bucket.CreationDate?.toISOString(),
+
+        // Versioning
+        versioning: configs.versioning.status === 'fulfilled' ? {
+          status: configs.versioning.value.Status,
+          mfaDelete: configs.versioning.value.MFADelete,
+        } : null,
+
+        // Encryption
+        encryption: configs.encryption.status === 'fulfilled' ? {
+          rules: configs.encryption.value.ServerSideEncryptionConfiguration?.Rules,
+        } : null,
+
+        // Lifecycle
+        lifecycle: configs.lifecycle.status === 'fulfilled' ? {
+          rules: configs.lifecycle.value.Rules?.map((rule: any) => ({
+            id: rule.ID,
+            status: rule.Status,
+            expiration: rule.Expiration,
+            transitions: rule.Transitions,
+          })),
+        } : null,
+
+        // Public access block
+        publicAccessBlock: configs.publicAccess.status === 'fulfilled' ? {
+          blockPublicAcls: configs.publicAccess.value.PublicAccessBlockConfiguration?.BlockPublicAcls,
+          ignorePublicAcls: configs.publicAccess.value.PublicAccessBlockConfiguration?.IgnorePublicAcls,
+          blockPublicPolicy: configs.publicAccess.value.PublicAccessBlockConfiguration?.BlockPublicPolicy,
+          restrictPublicBuckets: configs.publicAccess.value.PublicAccessBlockConfiguration?.RestrictPublicBuckets,
+        } : null,
       },
       tags,
       region: this.region,
