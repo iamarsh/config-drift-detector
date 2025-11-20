@@ -43,6 +43,10 @@ export class SupabaseClient {
           acknowledged: event.acknowledged,
           previous_state: event.previousState || null,
           current_state: event.currentState || null,
+          // Audit trail metadata
+          detected_by: event.detectedBy || null,
+          detection_run_id: event.detectionRunId || null,
+          snapshot_key: event.snapshotKey || null,
         })
         .select('id')
         .single();
@@ -112,6 +116,10 @@ export class SupabaseClient {
         acknowledged: row.acknowledged,
         previousState: row.previous_state,
         currentState: row.current_state,
+        // Audit trail metadata
+        detectedBy: row.detected_by,
+        detectionRunId: row.detection_run_id,
+        snapshotKey: row.snapshot_key,
       }));
 
       logger.info({ count: events.length }, 'Drift events fetched');

@@ -13,6 +13,12 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
   try {
     logger.info('Starting drift detection');
 
+    // Generate unique detection run ID for audit trail
+    const detectionRunId = `detect-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const detectedBy = process.env.AWS_LAMBDA_FUNCTION_NAME || 'detect-lambda';
+
+    logger.info({ detectionRunId, detectedBy }, 'Detection run initialized');
+
     // Initialize clients
     const s3Client = new S3Client({
       region: process.env.AWS_REGION || 'us-east-2',
@@ -32,13 +38,16 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
 
     // Get latest snapshot from S3
     logger.info('Fetching latest snapshot from S3');
-    const latestSnapshot = await getLatestSnapshotFromS3(s3Client, bucketName);
+    const { snapshot: latestSnapshot, key: snapshotKey } = await getLatestSnapshotFromS3(
+      s3Client,
+      bucketName
+    );
 
     if (!latestSnapshot) {
       throw new Error('No snapshots found in S3');
     }
 
-    logger.info({ timestamp: latestSnapshot.timestamp }, 'Latest snapshot retrieved');
+    logger.info({ timestamp: latestSnapshot.timestamp, snapshotKey }, 'Latest snapshot retrieved');
 
     // Get baseline from Supabase
     logger.info('Fetching baseline from Supabase');
@@ -74,15 +83,23 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
 
     logger.info({ driftCount: drifts.length }, 'Drift computation complete');
 
-    // Insert drift events into Supabase
+    // Insert drift events into Supabase with audit metadata
     if (drifts.length > 0) {
       logger.info('Inserting drift events into Supabase');
 
       for (const drift of drifts) {
-        await supabaseClient.insertDriftEvent(drift);
+        // Enrich drift event with audit trail metadata
+        const enrichedDrift = {
+          ...drift,
+          detectedBy,
+          detectionRunId,
+          snapshotKey: snapshotKey || undefined,
+        };
+
+        await supabaseClient.insertDriftEvent(enrichedDrift);
       }
 
-      logger.info({ count: drifts.length }, 'All drift events inserted');
+      logger.info({ count: drifts.length, detectionRunId }, 'All drift events inserted with audit metadata');
     }
 
     const duration = Date.now() - startTime;
@@ -127,14 +144,14 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
 async function getLatestSnapshotFromS3(
   s3Client: S3Client,
   bucketName: string
-): Promise<AwsSnapshot | null> {
+): Promise<{ snapshot: AwsSnapshot | null; key: string | null }> {
   try {
     // Use AwsClient for paginated S3 listing (handles >1000 objects)
     const awsClient = new AwsClient();
     const allObjects = await awsClient.listAllS3Objects(bucketName);
 
     if (allObjects.length === 0) {
-      return null;
+      return { snapshot: null, key: null };
     }
 
     logger.info({ totalObjects: allObjects.length }, 'All S3 objects retrieved with pagination');
@@ -149,7 +166,7 @@ async function getLatestSnapshotFromS3(
     const latestKey = sortedObjects[0].Key;
 
     if (!latestKey) {
-      return null;
+      return { snapshot: null, key: null };
     }
 
     logger.info({ key: latestKey }, 'Fetching latest snapshot');
@@ -170,7 +187,7 @@ async function getLatestSnapshotFromS3(
     const bodyString = await getResponse.Body.transformToString();
     const snapshot: AwsSnapshot = JSON.parse(bodyString);
 
-    return snapshot;
+    return { snapshot, key: latestKey };
   } catch (error) {
     logger.error({ error }, 'Failed to get latest snapshot from S3');
     throw error;

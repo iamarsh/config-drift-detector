@@ -75,6 +75,10 @@ export interface DriftEvent {
   acknowledged: boolean;
   previousState?: Record<string, any>;
   currentState?: Record<string, any>;
+  // Audit trail metadata
+  detectedBy?: string; // Lambda function name or user identifier
+  detectionRunId?: string; // Unique ID for this detection run
+  snapshotKey?: string; // S3 key of the snapshot that detected this drift
 }
 
 export const DriftEventSchema = z.object({
@@ -88,6 +92,10 @@ export const DriftEventSchema = z.object({
   acknowledged: z.boolean(),
   previousState: z.record(z.any()).optional(),
   currentState: z.record(z.any()).optional(),
+  // Audit trail metadata
+  detectedBy: z.string().optional(),
+  detectionRunId: z.string().optional(),
+  snapshotKey: z.string().optional(),
 });
 
 export interface SlackAlert {
