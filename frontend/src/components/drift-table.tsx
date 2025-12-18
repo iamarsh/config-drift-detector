@@ -67,6 +67,9 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
             <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Status
             </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              Audit Trail
+            </th>
             <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
               Actions
             </th>
@@ -111,6 +114,36 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-medium/10 text-medium border border-medium/20">
                     Pending
                   </span>
+                )}
+              </td>
+              <td className="px-6 py-4 text-sm text-text-secondary">
+                {drift.detected_by || drift.detection_run_id || drift.snapshot_key ? (
+                  <div className="space-y-1">
+                    {drift.detected_by && (
+                      <div className="flex items-center text-xs">
+                        <span className="font-medium text-text-secondary mr-1">By:</span>
+                        <span className="text-text-primary">{drift.detected_by}</span>
+                      </div>
+                    )}
+                    {drift.detection_run_id && (
+                      <div className="flex items-center text-xs">
+                        <span className="font-medium text-text-secondary mr-1">Run:</span>
+                        <span className="font-mono text-text-primary text-[10px]" title={drift.detection_run_id}>
+                          {drift.detection_run_id.substring(0, 20)}...
+                        </span>
+                      </div>
+                    )}
+                    {drift.snapshot_key && (
+                      <div className="flex items-center text-xs">
+                        <span className="font-medium text-text-secondary mr-1">Snapshot:</span>
+                        <span className="font-mono text-text-primary text-[10px]" title={drift.snapshot_key}>
+                          {drift.snapshot_key}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-text-secondary italic">No audit data</span>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

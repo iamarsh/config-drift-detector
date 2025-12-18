@@ -14,6 +14,10 @@ export interface DriftEvent {
   snapshot?: string
   region?: string
   acknowledged_at?: string
+  // Audit trail metadata
+  detected_by?: string
+  detection_run_id?: string
+  snapshot_key?: string
 }
 
 export interface DriftFilters {
