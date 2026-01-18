@@ -55,7 +55,7 @@ config-drift-detector/
 
 ## Quick Start
 
-See [docs/setup.md](docs/setup.md) for detailed setup instructions.
+See [Setup Guide](memory-bank/operational/setup.md) for detailed setup instructions.
 
 ### Prerequisites
 
@@ -176,10 +176,26 @@ Once configured, pushing to `main` will automatically:
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) - System design and data flow
-- [Setup Guide](docs/setup.md) - Local development setup
-- [Deployment](docs/deployment.md) - Production deployment guide
-- [API Reference](docs/api.md) - Supabase schema and Lambda APIs
+All documentation is organized in the [memory-bank](memory-bank/) directory:
+
+### Quick Start Guides
+- **[Setup Guide](memory-bank/operational/setup.md)** - Local development environment setup
+- **[Slack Webhook Setup](memory-bank/operational/slack-webhook-setup.md)** - Get your Slack webhook URL
+- **[AWS Billing Guide](memory-bank/technical/aws-billing-guide.md)** - Cost analysis and optimization
+
+### Technical Documentation
+- [Architecture](memory-bank/technical/architecture.md) - System design and data flow
+- [API Reference](memory-bank/reference/api.md) - Supabase schema and Lambda APIs
+
+### Operations
+- [Deployment Guide](memory-bank/operational/deployment.md) - Production deployment
+- [Progress Tracking](memory-bank/progress.md) - Implementation status
+
+### Project Context
+- [Project Goals](memory-bank/project-goals.md) - Vision and milestones
+- [Decision Log](memory-bank/decisions.log.md) - Architecture decisions
+
+**Full Documentation Index**: [memory-bank/README.md](memory-bank/README.md)
 
 ## What's Already Configured
 
@@ -193,7 +209,7 @@ Once configured, pushing to `main` will automatically:
 - ✅ Project URL: `https://yhwlsztdlxixrdycpedg.supabase.co`
 - ✅ Service Role Key configured
 - ✅ Anon Key configured
-- ⚠️ **Action Required**: Verify tables exist (see [docs/setup.md](docs/setup.md))
+- ⚠️ **Action Required**: Verify tables exist (see [Setup Guide](memory-bank/operational/setup.md))
 
 ### Environment Files
 - ✅ `backend/.env.local` - Configured with AWS & Supabase credentials
