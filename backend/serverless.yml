@@ -21,25 +21,7 @@ provider:
     LOG_LEVEL: ${env:LOG_LEVEL, 'info'}
 
   iam:
-    role:
-      statements:
-        # EC2 read permissions for snapshot
-        - Effect: Allow
-          Action:
-            - ec2:DescribeInstances
-            - ec2:DescribeSecurityGroups
-            - ec2:DescribeTags
-          Resource: '*'
-
-        # S3 permissions for snapshot storage
-        - Effect: Allow
-          Action:
-            - s3:PutObject
-            - s3:GetObject
-            - s3:ListBucket
-          Resource:
-            - arn:aws:s3:::${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}
-            - arn:aws:s3:::${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}/*
+    role: arn:aws:iam::218885889357:role/lambda-config-drift-detector-role
 
 functions:
   snapshot:
