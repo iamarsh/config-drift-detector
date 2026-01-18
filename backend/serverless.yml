@@ -1,0 +1,98 @@
+service: config-drift-detector
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${env:AWS_REGION, 'us-east-2'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 300
+
+  environment:
+    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID, '218885889357'}
+    AWS_REGION: ${env:AWS_REGION, 'us-east-2'}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}
+    SUPABASE_URL: ${env:SUPABASE_URL, 'https://yhwlsztdlxixrdycpedg.supabase.co'}
+    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY, 'placeholder'}
+    SLACK_WEBHOOK_URL: ${env:SLACK_WEBHOOK_URL, 'placeholder'}
+    NODE_ENV: ${env:NODE_ENV, 'production'}
+    LOG_LEVEL: ${env:LOG_LEVEL, 'info'}
+
+  iam:
+    role:
+      statements:
+        # EC2 read permissions for snapshot
+        - Effect: Allow
+          Action:
+            - ec2:DescribeInstances
+            - ec2:DescribeSecurityGroups
+            - ec2:DescribeTags
+          Resource: '*'
+
+        # S3 permissions for snapshot storage
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}
+            - arn:aws:s3:::${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}/*
+
+functions:
+  snapshot:
+    handler: dist/lambdas/snapshot.handler
+    description: Take periodic snapshots of AWS resources
+    events:
+      - schedule:
+          name: ${self:service}-${self:provider.stage}-snapshot-schedule
+          description: Trigger snapshot every 30 minutes
+          rate: cron(0,30 * * * ? *)
+          enabled: true
+
+  detect:
+    handler: dist/lambdas/detect.handler
+    description: Detect configuration drift by comparing snapshots
+    events:
+      - schedule:
+          name: ${self:service}-${self:provider.stage}-detect-schedule
+          description: Trigger drift detection 5 minutes after snapshot
+          rate: cron(5,35 * * * ? *)
+          enabled: true
+
+  alert:
+    handler: dist/lambdas/alert.handler
+    description: Send Slack alerts for HIGH/CRITICAL drift
+    events:
+      - schedule:
+          name: ${self:service}-${self:provider.stage}-alert-schedule
+          description: Trigger alerts 10 minutes after snapshot
+          rate: cron(10,40 * * * ? *)
+          enabled: true
+
+plugins:
+  - serverless-esbuild
+
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    format: esm
+    outputFileExtension: .mjs
+    exclude:
+      - '@aws-sdk/*'
+    target: node20
+    platform: node
+    concurrency: 10
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!tests/**'
+    - '!src/**'
+    - '!.env*'
+    - '!*.md'
