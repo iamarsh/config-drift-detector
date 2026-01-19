@@ -48,8 +48,7 @@ EventBridge (every 30 min)
 config-drift-detector/
 ├── backend/           # Lambda functions + shared utilities
 ├── frontend/          # Next.js dashboard
-├── docs/              # Architecture and setup documentation
-├── memory-bank/       # Project goals and decisions
+├── memory-bank/       # Project goals, architecture, and decisions
 └── .github/workflows/ # CI/CD pipelines
 ```
 
