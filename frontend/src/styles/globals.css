@@ -2,22 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+    /* Light mode colors */
+    --background: 247 250 252;        /* #F7FAFC */
+    --surface: 255 255 255;           /* #FFFFFF */
+    --surface-elevated: 255 255 255;  /* #FFFFFF */
+    --border: 226 232 240;            /* #E2E8F0 */
+    --text-primary: 26 32 44;         /* #1A202C */
+    --text-secondary: 113 128 150;    /* #718096 */
+    --text-tertiary: 160 174 192;     /* #A0AEC0 */
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+    /* Brand colors */
+    --aws-orange: 255 153 0;          /* #FF9900 */
+    --aws-blue: 35 47 62;             /* #232F3E */
+    --cloud-blue: 74 144 226;         /* #4A90E2 */
+
+    /* Semantic colors */
+    --critical: 229 62 62;            /* #E53E3E */
+    --high: 221 107 32;               /* #DD6B20 */
+    --medium: 236 201 75;             /* #ECC94B */
+    --low: 72 187 120;                /* #48BB78 */
+    --success: 56 161 105;            /* #38A169 */
+    --info: 66 153 225;               /* #4299E1 */
+  }
+
+  .dark {
+    /* Dark mode colors */
+    --background: 15 20 25;           /* #0F1419 */
+    --surface: 26 32 44;              /* #1A202C */
+    --surface-elevated: 45 55 72;     /* #2D3748 */
+    --border: 45 55 72;               /* #2D3748 */
+    --text-primary: 247 250 252;      /* #F7FAFC */
+    --text-secondary: 203 213 224;    /* #CBD5E0 */
+    --text-tertiary: 113 128 150;     /* #718096 */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 }
 
 @layer utilities {
