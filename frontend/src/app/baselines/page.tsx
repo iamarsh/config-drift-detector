@@ -31,13 +31,14 @@ export default function BaselinesPage() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) throw error
 
-      setBaseline(data)
+      // Get first item from array (or null if empty)
+      setBaseline(data && data.length > 0 ? data[0] : null)
     } catch (error) {
       console.error('Error fetching baseline:', error)
+      setBaseline(null)
     } finally {
       setLoading(false)
     }
