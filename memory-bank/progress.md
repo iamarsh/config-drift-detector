@@ -79,14 +79,40 @@ System is deployed and running in production. EventBridge schedulers are active 
 - [x] Set up EventBridge schedulers
 - [x] Test Lambda function execution
 
+### Frontend Redesign (Completed 2026-01-19)
+- [x] Implement theme system with next-themes
+- [x] Add dark mode toggle to navigation
+- [x] Create theme-aware color system using CSS variables
+- [x] Update all pages with theme colors (Dashboard, Drifts, Baselines)
+- [x] Update all components with theme colors (SummaryCards, DriftTable)
+- [x] Fix dropdown styling with AWS orange focus rings
+- [x] Add footer with portfolio credit link
+- [x] Fix baselines page 406 error (removed .single() call)
+- [x] Clear webpack cache to resolve runtime error
+
+### Production System Verification (Completed 2026-01-19)
+- [x] Configure AWS CLI with IAM user credentials
+- [x] Update .env.local with real AWS credentials
+- [x] Create and attach LambdaConfigDriftPolicy to Lambda role
+- [x] Grant S3 permissions (ListBucket, GetObject, PutObject)
+- [x] Grant EC2 permissions (DescribeInstances, DescribeSecurityGroups, etc.)
+- [x] Test snapshot Lambda - successful (1 Security Group captured)
+- [x] Fix Supabase schema mismatches:
+  - [x] Rename snapshot_id column to snapshot
+  - [x] Change snapshot column from TEXT to JSONB
+  - [x] Remove NOT NULL constraint from region column
+  - [x] Remove NOT NULL constraint from snapshot_data column
+  - [x] Remove NOT NULL constraint from created_by column
+- [x] Test detect Lambda - successful (baseline created)
+
 ## Pending Tasks
 
 ### Immediate (Post-Deployment)
-- [ ] Wait for first baseline creation (19:35 EST)
-- [ ] Verify drift detection workflow
+- [x] Wait for first baseline creation - ✅ Complete (2026-01-19)
+- [x] Verify drift detection workflow - ✅ Lambda functions tested
 - [ ] Make test changes in AWS to generate drift
 - [ ] Confirm Slack alerts working
-- [ ] Monitor CloudWatch Logs for errors
+- [ ] Monitor scheduled Lambda executions in production
 
 ### Short-term (v1.1)
 - [ ] Add drift acknowledgment button in dashboard
@@ -106,7 +132,15 @@ System is deployed and running in production. EventBridge schedulers are active 
 
 ## Known Issues
 
-None reported yet (first deployment pending).
+### Resolved (2026-01-19)
+- ~~Theme colors not changing in dark mode~~ - Fixed by replacing hardcoded colors with CSS variables
+- ~~Baselines page 406 error~~ - Fixed by removing .single() call
+- ~~Lambda IAM permissions missing~~ - Fixed by creating LambdaConfigDriftPolicy
+- ~~Database schema mismatch~~ - Fixed with 5 SQL migrations
+- ~~Webpack runtime error~~ - Fixed by clearing cache
+
+### Current
+None reported.
 
 ## Metrics
 

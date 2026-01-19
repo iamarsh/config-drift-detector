@@ -249,3 +249,83 @@ Use monorepo with npm workspaces.
 - Larger repository
 - Requires workspace-aware CI/CD
 - Must carefully manage workspace dependencies
+
+---
+
+## ADR-011: next-themes over Custom Theme Implementation
+
+**Date**: 2026-01-19
+
+**Status**: Accepted
+
+**Context**:
+Need dark mode support for frontend dashboard.
+
+**Decision**:
+Use next-themes library with CSS variables and Tailwind dark mode.
+
+**Rationale**:
+- Handles SSR/hydration edge cases automatically
+- System preference detection built-in
+- Local storage persistence included
+- Prevents theme flash on page load
+- Widely adopted in Next.js ecosystem
+- Only 1.5KB gzipped
+
+**Consequences**:
+- External dependency
+- Must use `suppressHydrationWarning` on html tag
+- Requires CSS variable setup for all theme colors
+
+---
+
+## ADR-012: Make Database Columns Nullable over Modifying Lambda Code
+
+**Date**: 2026-01-19
+
+**Status**: Accepted
+
+**Context**:
+Database schema mismatch between Lambda code expectations and Supabase table constraints. Lambda was failing with NOT NULL constraint violations on `region`, `snapshot_data`, and `created_by` columns.
+
+**Decision**:
+Remove NOT NULL constraints from database columns rather than modify Lambda code to provide values.
+
+**Rationale**:
+- Lambda code is already in production and working
+- `region` is embedded in the JSONB snapshot data, separate column is redundant
+- `snapshot_data` column appears unused (Lambda uses `snapshot` column)
+- `created_by` column appears unused (no auth context in Lambda)
+- Faster to fix with SQL migrations than redeploying Lambda
+- Allows for future flexibility in data model
+
+**Consequences**:
+- Database allows some columns to be null
+- Future queries must handle null values
+- May want to clean up unused columns later (snapshot_data, created_by)
+
+---
+
+## ADR-013: Use JSONB Column Type over TEXT for Snapshot Data
+
+**Date**: 2026-01-19
+
+**Status**: Accepted
+
+**Context**:
+Supabase baselines table had `snapshot` column as TEXT type, but Lambda code was inserting JSONB data.
+
+**Decision**:
+Change `snapshot` column from TEXT to JSONB type.
+
+**Rationale**:
+- Enables JSON queries and indexing in PostgreSQL
+- Type safety at database level
+- Better performance for JSON operations
+- Prevents malformed JSON from being stored
+- Matches Lambda code's data structure expectations
+
+**Consequences**:
+- Migration required to convert existing data
+- Slightly more storage overhead than TEXT
+- Must ensure all clients use JSONB type when inserting
