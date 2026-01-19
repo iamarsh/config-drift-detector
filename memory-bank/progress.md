@@ -55,24 +55,38 @@
 
 ## Current Status
 
-**Version**: 1.0.0-alpha
-**Commit Count**: 10
+**Version**: 1.0.0-beta
+**Commit Count**: 14+
 **Test Coverage**: ~80%
 **Documentation**: Complete
+**Backend Deployment**: ✅ Live on AWS Lambda (us-east-2)
+**Frontend Deployment**: ✅ Live on Vercel (https://config-drift-detector.vercel.app/)
 
-All core features implemented and tested locally. Ready for production deployment.
+System is deployed and running in production. EventBridge schedulers are active and executing on schedule.
+
+## Completed Deployment Tasks
+
+### Production Deployment (Completed 2026-01-18)
+- [x] Create backend .env.local
+- [x] Create frontend .env.local
+- [x] Update Slack webhook URL
+- [x] Verify Supabase tables exist
+- [x] Configure GitHub Secrets
+- [x] Deploy backend to AWS Lambda
+- [x] Deploy frontend to Vercel
+- [x] Fix Lambda ESM/CommonJS bundling issue
+- [x] Configure IAM permissions for deployment
+- [x] Set up EventBridge schedulers
+- [x] Test Lambda function execution
 
 ## Pending Tasks
 
-### Immediate (Before Production)
-- [ ] Create backend .env.local (user action required)
-- [ ] Create frontend .env.local (user action required)
-- [ ] Update Slack webhook URL (user action required)
-- [ ] Verify Supabase tables exist (user action required)
-- [ ] Configure GitHub Secrets (user action required)
-- [ ] Deploy backend to AWS Lambda
-- [ ] Deploy frontend to Vercel
-- [ ] Test end-to-end workflow in production
+### Immediate (Post-Deployment)
+- [ ] Wait for first baseline creation (19:35 EST)
+- [ ] Verify drift detection workflow
+- [ ] Make test changes in AWS to generate drift
+- [ ] Confirm Slack alerts working
+- [ ] Monitor CloudWatch Logs for errors
 
 ### Short-term (v1.1)
 - [ ] Add drift acknowledgment button in dashboard
@@ -124,9 +138,38 @@ None reported yet (first deployment pending).
 - **2026-01-18**: Project kickoff, requirements gathering
 - **2026-01-18**: Implementation complete (Commits 1-10)
 - **2026-01-18**: Documentation complete
-- **2026-01-19** (planned): Production deployment
+- **2026-01-18**: Production deployment complete ✅
+  - Backend deployed to AWS Lambda (us-east-2)
+  - Frontend deployed to Vercel
+  - EventBridge schedulers active
+  - GitHub Actions CI/CD configured
+- **2026-01-19** (planned): First drift detection cycle verification
 - **2026-01-26** (planned): First weekly review
-- **2026-02-01** (planned): v1.1 planning
+- **2026-02-01** (planned): v1.1 planning with UI redesign
+
+## Deployment Details
+
+### AWS Lambda Functions
+- **Region**: us-east-2
+- **Functions**:
+  - `config-drift-detector-prod-snapshot` (runs every 30 min at :00, :30)
+  - `config-drift-detector-prod-detect` (runs every 30 min at :05, :35)
+  - `config-drift-detector-prod-alert` (runs every 30 min at :10, :40)
+- **IAM Role**: `arn:aws:iam::218885889357:role/lambda-config-drift-detector-role`
+- **S3 Bucket**: `config-drift-snapshots-218885889357`
+
+### Vercel Frontend
+- **URL**: https://config-drift-detector.vercel.app/
+- **Pages**:
+  - `/` - Dashboard with summary cards and recent drifts
+  - `/drifts` - Filterable drift table
+  - `/baselines` - Current baseline viewer
+- **Auto-deploy**: Enabled for `main` branch changes to `frontend/`
+
+### GitHub Actions
+- **Test Workflow**: Runs on push/PR to main/develop
+- **Backend Deploy**: Triggers on backend/ changes
+- **Frontend Deploy**: Triggers on frontend/ changes
 
 ## Contributors
 
