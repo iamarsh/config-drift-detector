@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import '../styles/globals.css'
 import { ThemeProvider } from '@/components/theme/theme-provider'
+import { Navigation } from '@/components/layout/navigation'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -25,40 +26,8 @@ export default function RootLayout({
           enableSystem
           storageKey="config-drift-theme"
         >
-          <div className="min-h-screen bg-gray-50">
-            <nav className="bg-white shadow-sm border-b">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
-                  <div className="flex">
-                    <div className="flex-shrink-0 flex items-center">
-                      <h1 className="text-xl font-bold text-gray-900">
-                        Config Drift Detector
-                      </h1>
-                    </div>
-                    <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                      <a
-                        href="/"
-                        className="border-b-2 border-transparent hover:border-gray-300 text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium"
-                      >
-                        Dashboard
-                      </a>
-                      <a
-                        href="/drifts"
-                        className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium"
-                      >
-                        Drifts
-                      </a>
-                      <a
-                        href="/baselines"
-                        className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium"
-                      >
-                        Baselines
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </nav>
+          <div className="min-h-screen bg-background">
+            <Navigation />
             <main>{children}</main>
           </div>
         </ThemeProvider>
