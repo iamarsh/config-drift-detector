@@ -123,7 +123,7 @@ export default function DriftsPage() {
           <p className="mt-2 text-sm text-text-secondary">Loading...</p>
         </div>
       ) : (
-        <DriftTable drifts={drifts} />
+        <DriftTable drifts={drifts} onDriftAcknowledged={() => fetchDrifts()} />
       )}
     </div>
   )
