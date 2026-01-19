@@ -12,7 +12,6 @@ provider:
 
   environment:
     AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID, '218885889357'}
-    AWS_REGION: ${env:AWS_REGION, 'us-east-2'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME, 'config-drift-snapshots-218885889357'}
     SUPABASE_URL: ${env:SUPABASE_URL, 'https://yhwlsztdlxixrdycpedg.supabase.co'}
     SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY, 'placeholder'}
