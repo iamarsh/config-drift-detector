@@ -61,8 +61,8 @@ custom:
     bundle: true
     minify: true
     sourcemap: true
-    format: esm
-    outputFileExtension: .mjs
+    format: cjs
+    outputFileExtension: .js
     exclude:
       - '@aws-sdk/*'
     target: node20
