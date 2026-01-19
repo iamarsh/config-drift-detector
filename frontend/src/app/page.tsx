@@ -50,8 +50,8 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-2xl font-bold text-text-primary">Dashboard</h2>
+        <p className="mt-1 text-sm text-text-secondary">
           Monitor AWS configuration drift in real-time
         </p>
       </div>
@@ -59,13 +59,13 @@ export default function Home() {
       <SummaryCards drifts={drifts} />
 
       <div className="mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <h3 className="text-lg font-semibold text-text-primary mb-4">
           Recent Drift Events
         </h3>
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-2 text-sm text-gray-500">Loading...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aws-orange"></div>
+            <p className="mt-2 text-sm text-text-secondary">Loading...</p>
           </div>
         ) : (
           <DriftTable drifts={drifts} />

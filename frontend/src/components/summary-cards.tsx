@@ -16,14 +16,14 @@ export function SummaryCards({ drifts }: SummaryCardsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-      <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="bg-surface overflow-hidden shadow rounded-lg border border-border">
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-500 truncate">
+              <div className="text-sm font-medium text-text-secondary truncate">
                 Total Drifts
               </div>
-              <div className="mt-1 text-3xl font-semibold text-gray-900">
+              <div className="mt-1 text-3xl font-semibold text-text-primary">
                 {total}
               </div>
             </div>
@@ -31,14 +31,14 @@ export function SummaryCards({ drifts }: SummaryCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="bg-surface overflow-hidden shadow rounded-lg border border-border">
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-1">
-              <div className="text-sm font-medium text-red-500 truncate">
+              <div className="text-sm font-medium text-critical truncate">
                 Critical
               </div>
-              <div className="mt-1 text-3xl font-semibold text-red-600">
+              <div className="mt-1 text-3xl font-semibold text-critical">
                 {critical}
               </div>
             </div>
@@ -46,14 +46,14 @@ export function SummaryCards({ drifts }: SummaryCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="bg-surface overflow-hidden shadow rounded-lg border border-border">
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-1">
-              <div className="text-sm font-medium text-orange-500 truncate">
+              <div className="text-sm font-medium text-high truncate">
                 High
               </div>
-              <div className="mt-1 text-3xl font-semibold text-orange-600">
+              <div className="mt-1 text-3xl font-semibold text-high">
                 {high}
               </div>
             </div>
@@ -61,14 +61,14 @@ export function SummaryCards({ drifts }: SummaryCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="bg-surface overflow-hidden shadow rounded-lg border border-border">
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-1">
-              <div className="text-sm font-medium text-yellow-500 truncate">
+              <div className="text-sm font-medium text-medium truncate">
                 Medium
               </div>
-              <div className="mt-1 text-3xl font-semibold text-yellow-600">
+              <div className="mt-1 text-3xl font-semibold text-medium">
                 {medium}
               </div>
             </div>
@@ -76,14 +76,14 @@ export function SummaryCards({ drifts }: SummaryCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="bg-surface overflow-hidden shadow rounded-lg border border-border">
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-500 truncate">
+              <div className="text-sm font-medium text-text-secondary truncate">
                 Unacknowledged
               </div>
-              <div className="mt-1 text-3xl font-semibold text-gray-900">
+              <div className="mt-1 text-3xl font-semibold text-text-primary">
                 {unacknowledged}
               </div>
             </div>

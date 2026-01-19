@@ -8,44 +8,44 @@ interface DriftTableProps {
 export function DriftTable({ drifts }: DriftTableProps) {
   if (drifts.length === 0) {
     return (
-      <div className="text-center py-12 bg-white shadow rounded-lg">
-        <p className="text-sm text-gray-500">No drift events found</p>
+      <div className="text-center py-12 bg-surface shadow rounded-lg border border-border">
+        <p className="text-sm text-text-secondary">No drift events found</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="bg-surface shadow overflow-hidden sm:rounded-lg border border-border">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-surface-elevated">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Resource
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Type
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Change
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Severity
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Detected
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
               Status
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-surface divide-y divide-border">
           {drifts.map((drift) => (
-            <tr key={drift.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <tr key={drift.id} className="hover:bg-surface-elevated transition-colors">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">
                 {drift.resource_id}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                 {drift.resource_type}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -66,16 +66,16 @@ export function DriftTable({ drifts }: DriftTableProps) {
                   {drift.severity}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                 {formatTimestamp(drift.detected_at)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {drift.acknowledged ? (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
                     Acknowledged
                   </span>
                 ) : (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-medium/10 text-medium border border-medium/20">
                     Pending
                   </span>
                 )}

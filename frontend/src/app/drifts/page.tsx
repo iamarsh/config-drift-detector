@@ -54,16 +54,16 @@ export default function DriftsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">All Drift Events</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-2xl font-bold text-text-primary">All Drift Events</h2>
+        <p className="mt-1 text-sm text-text-secondary">
           Filter and search all configuration drift events
         </p>
       </div>
 
-      <div className="mb-6 bg-white shadow rounded-lg p-4">
+      <div className="mb-6 bg-surface shadow rounded-lg p-4 border border-border">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               Severity
             </label>
             <select
@@ -71,7 +71,7 @@ export default function DriftsPage() {
               onChange={(e) =>
                 setFilters({ ...filters, severity: e.target.value })
               }
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
             >
               <option value="all">All</option>
               <option value="CRITICAL">Critical</option>
@@ -82,13 +82,13 @@ export default function DriftsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               Resource Type
             </label>
             <select
               value={filters.type}
               onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
             >
               <option value="all">All</option>
               <option value="EC2">EC2</option>
@@ -99,7 +99,7 @@ export default function DriftsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               Status
             </label>
             <select
@@ -107,7 +107,7 @@ export default function DriftsPage() {
               onChange={(e) =>
                 setFilters({ ...filters, acknowledged: e.target.value })
               }
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
             >
               <option value="all">All</option>
               <option value="false">Pending</option>
@@ -119,8 +119,8 @@ export default function DriftsPage() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-sm text-gray-500">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aws-orange"></div>
+          <p className="mt-2 text-sm text-text-secondary">Loading...</p>
         </div>
       ) : (
         <DriftTable drifts={drifts} />
