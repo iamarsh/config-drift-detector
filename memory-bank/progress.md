@@ -55,8 +55,8 @@
 
 ## Current Status
 
-**Version**: 1.1.0-beta
-**Commit Count**: 16+
+**Version**: 1.2.0-beta
+**Commit Count**: 18+
 **Test Coverage**: ~80%
 **Documentation**: Complete
 **Backend Deployment**: ✅ Live on AWS Lambda (us-east-2)
@@ -64,7 +64,9 @@
 
 System is deployed and running in production. EventBridge schedulers are active and executing on schedule.
 **Production Verification**: ✅ Complete - All Lambda functions tested and working correctly.
-**Latest Feature**: ✅ Drift acknowledgment button added to dashboard (2026-01-19)
+**Latest Features**:
+- ✅ Drift acknowledgment button (2026-01-19)
+- ✅ Baseline management UI with history and download (2026-01-19)
 
 ## Completed Deployment Tasks
 
@@ -128,6 +130,17 @@ System is deployed and running in production. EventBridge schedulers are active 
 - [x] Auto-refresh drift list after acknowledgment
 - [x] Test and verify frontend build
 
+### v1.1 Feature: Baseline Management UI (Completed 2026-01-19)
+- [x] Add "Set New Baseline" button with guided workflow
+- [x] Implement auto-refresh detection for new baselines
+- [x] Add "Show/Hide History" toggle for baseline timeline
+- [x] Create timeline view with visual indicators
+- [x] Add click-to-view for historical baselines
+- [x] Add "Download JSON" button for baseline export
+- [x] Improve page layout with action button header
+- [x] Show resource counts in timeline
+- [x] Test and verify frontend build
+
 ## Pending Tasks
 
 ### Immediate (Post-Deployment) - ✅ ALL COMPLETE
@@ -139,7 +152,7 @@ System is deployed and running in production. EventBridge schedulers are active 
 
 ### Short-term (v1.1)
 - [x] Add drift acknowledgment button in dashboard - ✅ Complete (2026-01-19)
-- [ ] Implement baseline management UI
+- [x] Implement baseline management UI - ✅ Complete (2026-01-19)
 - [ ] Add WebSocket support for real-time updates
 - [ ] Add RDS instance monitoring
 - [ ] Add S3 bucket monitoring
@@ -179,9 +192,9 @@ None reported.
   - Components: 6
 
 - **Total**:
-  - Lines of Code: ~2,400
+  - Lines of Code: ~2,600
   - Files: 29
-  - Commits: 16
+  - Commits: 18
 
 ### Performance Targets
 - Lambda Cold Start: < 2s
@@ -200,13 +213,14 @@ None reported.
   - Frontend deployed to Vercel
   - EventBridge schedulers active
   - GitHub Actions CI/CD configured
-- **2026-01-19**: Production verification complete ✅
+- **2026-01-19**: Production verification and v1.1-1.2 features complete ✅
   - Tested drift detection with real AWS changes
   - Verified all 3 Lambda functions working correctly
   - Code quality audit and cleanup
   - Implemented drift acknowledgment feature (v1.1)
+  - Implemented baseline management UI (v1.2)
 - **2026-01-26** (planned): First weekly review
-- **2026-02-01** (planned): v1.2 features (baseline management, WebSocket updates)
+- **2026-02-01** (planned): v1.3 features (WebSocket updates, resource monitoring expansion)
 
 ## Deployment Details
 
