@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase-client'
 import { DriftTable } from '../../components/drift-table'
 import { DriftEvent } from '../page'
+import { ToastContainer, useToast } from '../../components/toast'
 
 export default function DriftsPage() {
   const [drifts, setDrifts] = useState<DriftEvent[]>([])
@@ -13,12 +14,9 @@ export default function DriftsPage() {
     type: 'all',
     acknowledged: 'all',
   })
+  const { toasts, addToast, dismissToast } = useToast()
 
-  useEffect(() => {
-    fetchDrifts()
-  }, [filters])
-
-  async function fetchDrifts() {
+  const fetchDrifts = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -49,16 +47,71 @@ export default function DriftsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    fetchDrifts()
+
+    // Subscribe to real-time drift events
+    const channel = supabase
+      .channel('drift_events_changes_drifts_page')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'drift_events',
+        },
+        (payload) => {
+          const newDrift = payload.new as DriftEvent
+
+          // Add toast notification for HIGH/CRITICAL drifts
+          if (newDrift.severity === 'HIGH' || newDrift.severity === 'CRITICAL') {
+            addToast({
+              title: `${newDrift.severity} Drift Detected!`,
+              message: `${newDrift.resource_type}: ${newDrift.resource_id} (${newDrift.change_type})`,
+              type: newDrift.severity === 'CRITICAL' ? 'error' : 'warning',
+              duration: 10000,
+            })
+          }
+
+          // Re-fetch to respect current filters
+          fetchDrifts()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drift_events',
+        },
+        (payload) => {
+          const updatedDrift = payload.new as DriftEvent
+          setDrifts((prevDrifts) =>
+            prevDrifts.map((drift) =>
+              drift.id === updatedDrift.id ? updatedDrift : drift
+            )
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchDrifts, addToast])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-text-primary">All Drift Events</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          Filter and search all configuration drift events
-        </p>
-      </div>
+    <>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-text-primary">All Drift Events</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            Filter and search all configuration drift events
+          </p>
+        </div>
 
       <div className="mb-6 bg-surface shadow rounded-lg p-4 border border-border">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -125,6 +178,7 @@ export default function DriftsPage() {
       ) : (
         <DriftTable drifts={drifts} onDriftAcknowledged={() => fetchDrifts()} />
       )}
-    </div>
+      </div>
+    </>
   )
 }

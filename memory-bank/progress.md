@@ -55,8 +55,8 @@
 
 ## Current Status
 
-**Version**: 1.2.0-beta
-**Commit Count**: 18+
+**Version**: 1.3.0
+**Commit Count**: 22+
 **Test Coverage**: ~80%
 **Documentation**: Complete
 **Backend Deployment**: ✅ Live on AWS Lambda (us-east-2)
@@ -67,6 +67,8 @@ System is deployed and running in production. EventBridge schedulers are active 
 **Latest Features**:
 - ✅ Drift acknowledgment button (2026-01-19)
 - ✅ Baseline management UI with history and download (2026-01-19)
+- ✅ WebSocket real-time updates with toast notifications (2026-01-24)
+- ✅ Dependabot automated dependency updates (2026-01-24)
 
 ## Completed Deployment Tasks
 
@@ -141,6 +143,17 @@ System is deployed and running in production. EventBridge schedulers are active 
 - [x] Show resource counts in timeline
 - [x] Test and verify frontend build
 
+### v1.1 Feature: WebSocket Real-time Updates (Completed 2026-01-24)
+- [x] Create toast notification system component
+- [x] Implement Supabase Realtime subscriptions in Dashboard page
+- [x] Replace 5-second polling with WebSocket updates
+- [x] Add toast notifications for HIGH/CRITICAL drifts
+- [x] Handle INSERT events for new drifts
+- [x] Handle UPDATE events for drift acknowledgments
+- [x] Implement real-time updates in Drifts page
+- [x] Test and verify frontend build
+- [x] Fix Vercel deployment path issue
+
 ## Pending Tasks
 
 ### Immediate (Post-Deployment) - ✅ ALL COMPLETE
@@ -153,10 +166,10 @@ System is deployed and running in production. EventBridge schedulers are active 
 ### Short-term (v1.1)
 - [x] Add drift acknowledgment button in dashboard - ✅ Complete (2026-01-19)
 - [x] Implement baseline management UI - ✅ Complete (2026-01-19)
-- [ ] Add WebSocket support for real-time updates
+- [x] Add WebSocket support for real-time updates - ✅ Complete (2026-01-24)
+- [ ] Implement drift trend analysis
 - [ ] Add RDS instance monitoring
 - [ ] Add S3 bucket monitoring
-- [ ] Implement drift trend analysis
 
 ### Medium-term (v2.0)
 - [ ] Multi-account support
@@ -219,8 +232,13 @@ None reported.
   - Code quality audit and cleanup
   - Implemented drift acknowledgment feature (v1.1)
   - Implemented baseline management UI (v1.2)
+- **2026-01-24**: v1.3 features complete ✅
+  - Implemented WebSocket real-time updates with Supabase Realtime
+  - Added toast notification system for HIGH/CRITICAL drifts
+  - Configured Dependabot for automated dependency updates
+  - Fixed Vercel deployment workflow
 - **2026-01-26** (planned): First weekly review
-- **2026-02-01** (planned): v1.3 features (WebSocket updates, resource monitoring expansion)
+- **2026-02-01** (planned): v2.0 features (Drift trend analysis, RDS/S3 monitoring)
 
 ## Deployment Details
 
