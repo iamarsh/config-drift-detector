@@ -541,7 +541,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Author
 
 **Arshdeep Singh**
-- 🌐 Portfolio: [arshsingh.dev](https://arshsingh.dev)
+- 🌐 Portfolio: [iamarsh.com](https://iamarsh.com)
 - 💼 LinkedIn: [linkedin.com/in/iamarsh](https://linkedin.com/in/iamarsh)
 - 🐙 GitHub: [@iamarsh](https://github.com/iamarsh)
 - 📧 Email: arshdeepsingh983@gmail.com
