@@ -151,11 +151,14 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
                   <button
                     onClick={() => handleAcknowledge(drift.id)}
                     disabled={acknowledging.has(drift.id)}
+                    aria-label={`Acknowledge ${drift.resource_type} drift for ${drift.resource_id}`}
+                    aria-busy={acknowledging.has(drift.id)}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-aws-orange hover:bg-aws-orange/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aws-orange disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {acknowledging.has(drift.id) ? (
                       <>
                         <svg
+                          aria-hidden="true"
                           className="animate-spin -ml-0.5 mr-1.5 h-3 w-3 text-white"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -175,11 +178,12 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        Acknowledging...
+                        <span aria-live="polite">Acknowledging...</span>
                       </>
                     ) : (
                       <>
                         <svg
+                          aria-hidden="true"
                           className="-ml-0.5 mr-1.5 h-3 w-3"
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 20 20"
