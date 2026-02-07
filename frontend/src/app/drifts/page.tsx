@@ -93,10 +93,11 @@ export default function DriftsPage() {
         <div className="mb-6 bg-surface shadow rounded-lg p-4 border border-border">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
+              <label htmlFor="all-drifts-severity-filter" className="block text-sm font-medium text-text-primary mb-2">
                 Severity
               </label>
               <select
+                id="all-drifts-severity-filter"
                 value={filters.severity}
                 onChange={(e) =>
                   setFilters({ ...filters, severity: e.target.value })
@@ -112,10 +113,11 @@ export default function DriftsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
+              <label htmlFor="all-drifts-type-filter" className="block text-sm font-medium text-text-primary mb-2">
                 Resource Type
               </label>
               <select
+                id="all-drifts-type-filter"
                 value={filters.type}
                 onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                 className="block w-full pl-3 pr-10 py-2 text-base bg-surface border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-aws-orange sm:text-sm rounded-md transition-colors"
@@ -129,10 +131,11 @@ export default function DriftsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
+              <label htmlFor="all-drifts-status-filter" className="block text-sm font-medium text-text-primary mb-2">
                 Status
               </label>
               <select
+                id="all-drifts-status-filter"
                 value={filters.acknowledged}
                 onChange={(e) =>
                   setFilters({ ...filters, acknowledged: e.target.value })

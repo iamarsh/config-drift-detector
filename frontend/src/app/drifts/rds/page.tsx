@@ -93,10 +93,11 @@ export default function RDSDriftsPage() {
         {/* Filters */}
         <div className="mb-6 flex gap-4">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
+            <label htmlFor="rds-severity-filter" className="block text-sm font-medium text-text-secondary mb-2">
               Severity
             </label>
             <select
+              id="rds-severity-filter"
               value={filters.severity}
               onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
               className="px-4 py-2 rounded-md border border-border bg-surface text-text-primary focus:ring-2 focus:ring-aws-orange focus:border-aws-orange"
@@ -110,10 +111,11 @@ export default function RDSDriftsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
+            <label htmlFor="rds-status-filter" className="block text-sm font-medium text-text-secondary mb-2">
               Status
             </label>
             <select
+              id="rds-status-filter"
               value={filters.acknowledged}
               onChange={(e) => setFilters({ ...filters, acknowledged: e.target.value })}
               className="px-4 py-2 rounded-md border border-border bg-surface text-text-primary focus:ring-2 focus:ring-aws-orange focus:border-aws-orange"
