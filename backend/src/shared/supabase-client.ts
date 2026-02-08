@@ -64,6 +64,83 @@ export class SupabaseClient {
     }
   }
 
+  async insertDriftEventsBatch(events: DriftEvent[]): Promise<string[]> {
+    try {
+      const batchSize = 100;
+      const insertedIds: string[] = [];
+
+      logger.info({ totalEvents: events.length, batchSize }, 'Starting batch drift insertion');
+
+      // Process events in batches of 100
+      for (let i = 0; i < events.length; i += batchSize) {
+        const batch = events.slice(i, i + batchSize);
+        const batchNumber = Math.floor(i / batchSize) + 1;
+        const totalBatches = Math.ceil(events.length / batchSize);
+
+        logger.info(
+          { batchNumber, totalBatches, batchSize: batch.length },
+          'Processing batch'
+        );
+
+        const batchStartTime = Date.now();
+
+        // Transform events to database format
+        const records = batch.map((event) => ({
+          account_id: event.accountId,
+          resource_id: event.resourceId,
+          resource_type: event.resourceType,
+          change_type: event.changeType,
+          severity: event.severity,
+          detected_at: event.detectedAt,
+          acknowledged: event.acknowledged,
+          previous_state: event.previousState || null,
+          current_state: event.currentState || null,
+          // Audit trail metadata
+          detected_by: event.detectedBy || null,
+          detection_run_id: event.detectionRunId || null,
+          snapshot_key: event.snapshotKey || null,
+        }));
+
+        const { data, error } = await this.client
+          .from('drift_events')
+          .insert(records)
+          .select('id');
+
+        if (error) {
+          logger.error(
+            { error, batchNumber, batchSize: batch.length },
+            'Failed to insert drift batch'
+          );
+          throw error;
+        }
+
+        const batchDuration = Date.now() - batchStartTime;
+        const ids = data.map((row) => row.id);
+        insertedIds.push(...ids);
+
+        logger.info(
+          {
+            batchNumber,
+            totalBatches,
+            insertedCount: ids.length,
+            batchDuration,
+          },
+          'Batch inserted successfully'
+        );
+      }
+
+      logger.info(
+        { totalInserted: insertedIds.length, batches: Math.ceil(events.length / batchSize) },
+        'Batch drift insertion completed'
+      );
+
+      return insertedIds;
+    } catch (error) {
+      logger.error({ error, totalEvents: events.length }, 'Error in batch drift insertion');
+      throw error;
+    }
+  }
+
   async getDriftEvents(
     accountId: string,
     filters?: {

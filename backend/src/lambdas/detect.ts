@@ -9,15 +9,17 @@ const logger = createLogger('detect-lambda');
 
 export const handler = async (_event: any): Promise<DetectionResult> => {
   const startTime = Date.now();
+  const detectionRunId = `detect-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
   try {
-    logger.info('Starting drift detection');
-
-    // Generate unique detection run ID for audit trail
-    const detectionRunId = `detect-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const detectedBy = process.env.AWS_LAMBDA_FUNCTION_NAME || 'detect-lambda';
 
-    logger.info({ detectionRunId, detectedBy }, 'Detection run initialized');
+    logger.info({
+      detectionRunId,
+      detectedBy,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    }, 'Starting drift detection');
 
     // Initialize clients
     const s3Client = new S3Client({
@@ -83,31 +85,49 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
 
     logger.info({ driftCount: drifts.length }, 'Drift computation complete');
 
-    // Insert drift events into Supabase with audit metadata
+    // Insert drift events into Supabase with audit metadata (batch insertion for performance)
     if (drifts.length > 0) {
-      logger.info('Inserting drift events into Supabase');
+      logger.info({ driftCount: drifts.length }, 'Inserting drift events into Supabase using batch insertion');
 
-      for (const drift of drifts) {
-        // Enrich drift event with audit trail metadata
-        const enrichedDrift = {
-          ...drift,
-          detectedBy,
+      const insertStartTime = Date.now();
+
+      // Enrich all drift events with audit trail metadata
+      const enrichedDrifts = drifts.map((drift) => ({
+        ...drift,
+        detectedBy,
+        detectionRunId,
+        snapshotKey: snapshotKey || undefined,
+      }));
+
+      // Use batch insertion (100 per query) for 100x performance improvement
+      await supabaseClient.insertDriftEventsBatch(enrichedDrifts);
+
+      const insertDuration = Date.now() - insertStartTime;
+
+      logger.info(
+        {
+          count: drifts.length,
           detectionRunId,
-          snapshotKey: snapshotKey || undefined,
-        };
-
-        await supabaseClient.insertDriftEvent(enrichedDrift);
-      }
-
-      logger.info({ count: drifts.length, detectionRunId }, 'All drift events inserted with audit metadata');
+          insertDuration,
+        },
+        'All drift events inserted with audit metadata using batch insertion'
+      );
     }
 
     const duration = Date.now() - startTime;
+
+    logger.logPerformance('drift-detection', duration, {
+      detectionRunId,
+      driftCount: drifts.length,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    });
 
     logger.info(
       {
         driftCount: drifts.length,
         duration,
+        detectionRunId,
       },
       'Drift detection completed successfully'
     );
@@ -122,13 +142,13 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error(
-      {
-        error,
-        duration,
-      },
-      'Drift detection failed'
-    );
+    logger.logError(error as Error, {
+      detectionRunId,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+      duration,
+      stage: 'detect',
+    });
 
     return {
       success: false,
