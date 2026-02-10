@@ -7,9 +7,14 @@ const logger = createLogger('snapshot-lambda');
 
 export const handler = async (_event: any): Promise<SnapshotResult> => {
   const startTime = Date.now();
+  const snapshotRunId = `snapshot-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
   try {
-    logger.info('Starting snapshot process');
+    logger.info({
+      snapshotRunId,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    }, 'Starting snapshot process');
 
     // Initialize clients
     const awsClient = new AwsClient();
@@ -52,11 +57,19 @@ export const handler = async (_event: any): Promise<SnapshotResult> => {
 
     const duration = Date.now() - startTime;
 
+    logger.logPerformance('snapshot-collection', duration, {
+      snapshotRunId,
+      resourceCount: snapshot.resources.length,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    });
+
     logger.info(
       {
         key,
         resourceCount: snapshot.resources.length,
         duration,
+        snapshotRunId,
       },
       'Snapshot completed successfully'
     );
@@ -70,13 +83,13 @@ export const handler = async (_event: any): Promise<SnapshotResult> => {
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error(
-      {
-        error,
-        duration,
-      },
-      'Snapshot failed'
-    );
+    logger.logError(error as Error, {
+      snapshotRunId,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+      duration,
+      stage: 'snapshot',
+    });
 
     return {
       success: false,

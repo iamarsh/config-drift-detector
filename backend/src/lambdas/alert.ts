@@ -7,9 +7,14 @@ const logger = createLogger('alert-lambda');
 
 export const handler = async (_event: any): Promise<AlertResult> => {
   const startTime = Date.now();
+  const alertRunId = `alert-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
   try {
-    logger.info('Starting alert process');
+    logger.info({
+      alertRunId,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    }, 'Starting alert process');
 
     // Initialize clients
     const supabaseClient = new SupabaseClient();
@@ -59,10 +64,18 @@ export const handler = async (_event: any): Promise<AlertResult> => {
 
     const duration = Date.now() - startTime;
 
+    logger.logPerformance('slack-alerts', duration, {
+      alertRunId,
+      alertCount: drifts.length,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    });
+
     logger.info(
       {
         alertsSent: drifts.length,
         duration,
+        alertRunId,
       },
       'Alert process completed successfully'
     );
@@ -75,13 +88,13 @@ export const handler = async (_event: any): Promise<AlertResult> => {
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error(
-      {
-        error,
-        duration,
-      },
-      'Alert process failed'
-    );
+    logger.logError(error as Error, {
+      alertRunId,
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+      duration,
+      stage: 'alert',
+    });
 
     return {
       success: false,

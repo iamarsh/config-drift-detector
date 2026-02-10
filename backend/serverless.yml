@@ -9,6 +9,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 256  # Reduced from 512MB to optimize cost (50% savings)
   timeout: 120     # Reduced from 300s to 120s (still plenty for most operations)
+  logRetentionInDays: 30  # AWS Free Tier: 5GB/month log storage
 
   environment:
     AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
