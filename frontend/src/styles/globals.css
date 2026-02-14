@@ -14,7 +14,7 @@
     --text-tertiary: 160 174 192;     /* #A0AEC0 */
 
     /* Brand colors */
-    --aws-orange: 255 153 0;          /* #FF9900 */
+    --aws-orange: 217 119 6;          /* #D97706 - WCAG 2.1 AA compliant (4.5:1 contrast ratio) */
     --aws-blue: 35 47 62;             /* #232F3E */
     --cloud-blue: 74 144 226;         /* #4A90E2 */
 
