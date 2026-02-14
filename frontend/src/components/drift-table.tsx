@@ -150,10 +150,16 @@ export function DriftTable({ drifts, onDriftAcknowledged }: DriftTableProps) {
                 {!drift.acknowledged && (
                   <button
                     onClick={() => handleAcknowledge(drift.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleAcknowledge(drift.id)
+                      }
+                    }}
                     disabled={acknowledging.has(drift.id)}
                     aria-label={`Acknowledge ${drift.resource_type} drift for ${drift.resource_id}`}
                     aria-busy={acknowledging.has(drift.id)}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-aws-orange hover:bg-aws-orange/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aws-orange disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-aws-orange hover:bg-aws-orange/90 focus:outline-none focus:ring-2 focus:ring-aws-orange disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {acknowledging.has(drift.id) ? (
                       <>
