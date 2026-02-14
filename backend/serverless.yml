@@ -21,7 +21,17 @@ provider:
     LOG_LEVEL: ${env:LOG_LEVEL, 'info'}
 
   iam:
-    role: ${env:LAMBDA_ROLE_ARN}
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ec2:DescribeInstances
+            - ec2:DescribeSecurityGroups
+            - rds:DescribeDBInstances
+            - s3:ListBucket
+            - s3:GetObject
+            - s3:PutObject
+          Resource: '*'
 
 functions:
   snapshot:
