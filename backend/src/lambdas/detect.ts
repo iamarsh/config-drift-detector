@@ -1,4 +1,5 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import { SupabaseClient } from '../shared/supabase-client.js';
 import { AwsClient } from '../shared/aws-client.js';
 import { createLogger } from '../shared/logger.js';
@@ -99,19 +100,33 @@ export const handler = async (_event: any): Promise<DetectionResult> => {
         snapshotKey: snapshotKey || undefined,
       }));
 
-      // Use batch insertion (100 per query) for 100x performance improvement
-      await supabaseClient.insertDriftEventsBatch(enrichedDrifts);
+      try {
+        // Use batch insertion (100 per query) for 100x performance improvement
+        await supabaseClient.insertDriftEventsBatch(enrichedDrifts);
 
-      const insertDuration = Date.now() - insertStartTime;
+        const insertDuration = Date.now() - insertStartTime;
 
-      logger.info(
-        {
-          count: drifts.length,
-          detectionRunId,
-          insertDuration,
-        },
-        'All drift events inserted with audit metadata using batch insertion'
-      );
+        logger.info(
+          {
+            count: drifts.length,
+            detectionRunId,
+            insertDuration,
+          },
+          'All drift events inserted with audit metadata using batch insertion'
+        );
+      } catch (insertError) {
+        // If batch insertion fails, send failed events to DLQ for manual processing
+        logger.error(
+          {
+            error: insertError,
+            driftCount: enrichedDrifts.length,
+            detectionRunId,
+          },
+          'Batch insertion failed, sending drift events to DLQ'
+        );
+
+        await sendToDLQ(enrichedDrifts, detectionRunId, insertError as Error);
+      }
     }
 
     const duration = Date.now() - startTime;
@@ -211,6 +226,79 @@ async function getLatestSnapshotFromS3(
   } catch (error) {
     logger.error({ error }, 'Failed to get latest snapshot from S3');
     throw error;
+  }
+}
+
+/**
+ * Send failed drift events to Dead-Letter Queue for manual processing
+ * This ensures no drift events are lost when database insertion fails
+ */
+async function sendToDLQ(
+  drifts: any[],
+  detectionRunId: string,
+  error: Error
+): Promise<void> {
+  try {
+    const sqsClient = new SQSClient({
+      region: process.env.AWS_REGION || 'us-east-1',
+    });
+
+    // Get DLQ URL from CloudFormation stack exports
+    const queueUrl = `https://sqs.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/config-drift-detector-${process.env.NODE_ENV || 'dev'}-drift-events-dlq`;
+
+    const message = {
+      detectionRunId,
+      driftCount: drifts.length,
+      drifts,
+      error: {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      },
+      timestamp: new Date().toISOString(),
+      accountId: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    };
+
+    const command = new SendMessageCommand({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(message),
+      MessageAttributes: {
+        detectionRunId: {
+          DataType: 'String',
+          StringValue: detectionRunId,
+        },
+        driftCount: {
+          DataType: 'Number',
+          StringValue: drifts.length.toString(),
+        },
+        errorType: {
+          DataType: 'String',
+          StringValue: error.name,
+        },
+      },
+    });
+
+    await sqsClient.send(command);
+
+    logger.info(
+      {
+        detectionRunId,
+        driftCount: drifts.length,
+        queueUrl,
+      },
+      'Failed drift events sent to DLQ successfully'
+    );
+  } catch (dlqError) {
+    // Log DLQ failure but don't throw - we already have the original error
+    logger.error(
+      {
+        error: dlqError,
+        detectionRunId,
+        driftCount: drifts.length,
+      },
+      'Failed to send drift events to DLQ'
+    );
   }
 }
 

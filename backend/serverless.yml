@@ -32,6 +32,11 @@ provider:
             - s3:GetObject
             - s3:PutObject
           Resource: '*'
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource:
+            - !GetAtt DriftEventsDLQ.Arn
 
 functions:
   snapshot:
@@ -85,6 +90,98 @@ custom:
     target: node20
     platform: node
     concurrency: 10
+
+resources:
+  Resources:
+    # SNS Topic for CloudWatch Alarms
+    AlertTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-alerts
+        DisplayName: Config Drift Detector Alerts
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Stage
+            Value: ${self:provider.stage}
+          - Key: Purpose
+            Value: CloudWatch alarm notifications
+
+    # Dead-Letter Queue for failed drift insertions
+    DriftEventsDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-drift-events-dlq
+        MessageRetentionPeriod: 1209600  # 14 days (max retention)
+        VisibilityTimeout: 300
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Stage
+            Value: ${self:provider.stage}
+          - Key: Purpose
+            Value: Dead-letter queue for failed drift event insertions
+
+    # CloudWatch Alarm: Lambda Errors
+    LambdaErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-lambda-errors
+        AlarmDescription: Alert when Lambda functions have 5+ errors in 5 minutes
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        Period: 300  # 5 minutes
+        EvaluationPeriods: 1
+        Threshold: 5
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+        ActionsEnabled: true
+        AlarmActions:
+          - !Ref AlertTopic
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref SnapshotLambdaFunction
+
+    # CloudWatch Alarm: DLQ Depth
+    DLQDepthAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-dlq-depth
+        AlarmDescription: Alert when DLQ has 10+ messages (failed drift insertions)
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Statistic: Average
+        Period: 300  # 5 minutes
+        EvaluationPeriods: 1
+        Threshold: 10
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+        ActionsEnabled: true
+        AlarmActions:
+          - !Ref AlertTopic
+        Dimensions:
+          - Name: QueueName
+            Value: !GetAtt DriftEventsDLQ.QueueName
+
+  Outputs:
+    AlertTopicArn:
+      Description: ARN of the SNS Alert Topic
+      Value: !Ref AlertTopic
+      Export:
+        Name: ${self:service}-${self:provider.stage}-alert-topic-arn
+
+    DriftEventsDLQUrl:
+      Description: URL of the Drift Events Dead-Letter Queue
+      Value: !Ref DriftEventsDLQ
+      Export:
+        Name: ${self:service}-${self:provider.stage}-dlq-url
+
+    DriftEventsDLQArn:
+      Description: ARN of the Drift Events Dead-Letter Queue
+      Value: !GetAtt DriftEventsDLQ.Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-dlq-arn
 
 package:
   individually: true
