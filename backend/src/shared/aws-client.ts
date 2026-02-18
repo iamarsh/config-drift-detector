@@ -45,23 +45,66 @@ export class AwsClient {
     logger.info({ region: this.region, accountId: this.accountId }, 'AWS client initialized');
   }
 
+  /**
+   * Fetch all EC2 instances with automatic pagination
+   * AWS limits DescribeInstances to 1000 instances per response
+   *
+   * @returns Array of all EC2 instances mapped to AwsResource format
+   */
+  async describeAllInstances(): Promise<Instance[]> {
+    const allInstances: Instance[] = [];
+    let nextToken: string | undefined;
+
+    try {
+      do {
+        const command = new DescribeInstancesCommand({
+          NextToken: nextToken,
+          MaxResults: 1000, // AWS maximum
+        });
+
+        const response = await this.retryWithBackoff(() => this.ec2Client.send(command));
+
+        // Flatten reservations to get all instances
+        for (const reservation of response.Reservations || []) {
+          if (reservation.Instances) {
+            allInstances.push(...reservation.Instances);
+          }
+        }
+
+        nextToken = response.NextToken;
+
+        logger.debug(
+          {
+            currentBatch: response.Reservations?.reduce((sum, r) => sum + (r.Instances?.length || 0), 0) || 0,
+            totalSoFar: allInstances.length,
+            hasMore: !!nextToken,
+          },
+          'Fetched EC2 instances batch'
+        );
+      } while (nextToken);
+
+      logger.info({ totalInstances: allInstances.length }, 'All EC2 instances fetched with pagination');
+
+      return allInstances;
+    } catch (error) {
+      logger.error({ error }, 'Failed to fetch all EC2 instances');
+      throw error;
+    }
+  }
+
   async snapshotEC2(): Promise<AwsResource[]> {
     try {
       logger.info('Fetching EC2 instances');
 
-      const command = new DescribeInstancesCommand({});
-      const response = await this.ec2Client.send(command);
+      // Use paginated method to handle >1000 instances
+      const instances = await this.describeAllInstances();
 
-      const instances: AwsResource[] = [];
+      const resources: AwsResource[] = instances.map((instance) =>
+        this.mapEC2Instance(instance)
+      );
 
-      for (const reservation of response.Reservations || []) {
-        for (const instance of reservation.Instances || []) {
-          instances.push(this.mapEC2Instance(instance));
-        }
-      }
-
-      logger.info({ count: instances.length }, 'EC2 instances fetched');
-      return instances;
+      logger.info({ count: resources.length }, 'EC2 instances fetched');
+      return resources;
     } catch (error) {
       logger.error({ error }, 'Failed to fetch EC2 instances');
       throw error;
