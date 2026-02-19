@@ -15,8 +15,17 @@ interface SlackBlock {
   }>;
 }
 
+interface CircuitBreakerState {
+  failureCount: number;
+  lastFailureTime: number | null;
+  isOpen: boolean;
+}
+
 export class SlackClient {
   private webhookUrl: string;
+  private circuitBreaker: CircuitBreakerState;
+  private readonly FAILURE_THRESHOLD = 3;
+  private readonly RESET_TIMEOUT = 60000; // 1 minute in milliseconds
 
   constructor() {
     const url = process.env.SLACK_WEBHOOK_URL;
@@ -26,10 +35,81 @@ export class SlackClient {
     }
 
     this.webhookUrl = url;
-    logger.info('Slack client initialized');
+    this.circuitBreaker = {
+      failureCount: 0,
+      lastFailureTime: null,
+      isOpen: false,
+    };
+    logger.info('Slack client initialized with circuit breaker');
+  }
+
+  /**
+   * Check if circuit breaker should allow requests
+   * Circuit opens after 3 failures and resets after 1 minute
+   */
+  private checkCircuitBreaker(): boolean {
+    const now = Date.now();
+
+    // Check if circuit should be reset (1 minute has passed since last failure)
+    if (
+      this.circuitBreaker.isOpen &&
+      this.circuitBreaker.lastFailureTime &&
+      now - this.circuitBreaker.lastFailureTime > this.RESET_TIMEOUT
+    ) {
+      logger.info('Circuit breaker resetting after timeout');
+      this.circuitBreaker = {
+        failureCount: 0,
+        lastFailureTime: null,
+        isOpen: false,
+      };
+    }
+
+    return !this.circuitBreaker.isOpen;
+  }
+
+  /**
+   * Record a failure and potentially open the circuit
+   */
+  private recordFailure(): void {
+    this.circuitBreaker.failureCount++;
+    this.circuitBreaker.lastFailureTime = Date.now();
+
+    if (this.circuitBreaker.failureCount >= this.FAILURE_THRESHOLD) {
+      this.circuitBreaker.isOpen = true;
+      logger.warn(
+        {
+          failureCount: this.circuitBreaker.failureCount,
+          resetTimeout: this.RESET_TIMEOUT,
+        },
+        'Circuit breaker opened after threshold failures'
+      );
+    }
+  }
+
+  /**
+   * Record a successful request and reset failure count
+   */
+  private recordSuccess(): void {
+    if (this.circuitBreaker.failureCount > 0) {
+      logger.info('Circuit breaker: successful request, resetting failure count');
+    }
+    this.circuitBreaker.failureCount = 0;
+    this.circuitBreaker.lastFailureTime = null;
   }
 
   async sendAlert(drift: DriftEvent): Promise<void> {
+    // Check circuit breaker before attempting request
+    if (!this.checkCircuitBreaker()) {
+      logger.warn(
+        {
+          failureCount: this.circuitBreaker.failureCount,
+          isOpen: this.circuitBreaker.isOpen,
+        },
+        'Circuit breaker is open, skipping Slack alert'
+      );
+      return; // Fail fast without throwing
+    }
+
     try {
       logger.info(
         {
@@ -42,14 +122,28 @@ export class SlackClient {
       const blocks = this.buildAlertBlocks([drift]);
       await this.sendMessage(blocks);
 
+      this.recordSuccess();
       logger.info('Slack alert sent successfully');
     } catch (error) {
+      this.recordFailure();
       logger.error({ error }, 'Failed to send Slack alert');
       throw error;
     }
   }
 
   async sendBatchAlerts(drifts: DriftEvent[]): Promise<void> {
+    // Check circuit breaker before attempting request
+    if (!this.checkCircuitBreaker()) {
+      logger.warn(
+        {
+          failureCount: this.circuitBreaker.failureCount,
+          isOpen: this.circuitBreaker.isOpen,
+        },
+        'Circuit breaker is open, skipping batch Slack alerts'
+      );
+      return; // Fail fast without throwing
+    }
+
     try {
       logger.info({ count: drifts.length }, 'Sending batch Slack alerts');
 
@@ -61,8 +155,10 @@ export class SlackClient {
       const blocks = this.buildAlertBlocks(drifts);
       await this.sendMessage(blocks);
 
+      this.recordSuccess();
       logger.info('Batch Slack alerts sent successfully');
     } catch (error) {
+      this.recordFailure();
       logger.error({ error }, 'Failed to send batch Slack alerts');
       throw error;
     }
