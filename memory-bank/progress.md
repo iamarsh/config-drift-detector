@@ -309,15 +309,34 @@ System is deployed and running in production. EventBridge schedulers are active 
   - Improves readability for users with visual impairments and color blindness
   - Maintains brand identity while prioritizing accessibility
 
-### Frontend Testing (May-Jun 2026)
-- [x] Setup Vitest + React Testing Library (TEST-001) - May 5, 2026
+### Frontend Testing (Feb 2026)
+- [x] Setup Vitest + React Testing Library (TEST-001) - Feb 15, 2026
   - Installed testing dependencies (@testing-library/react@16, vitest@2, jsdom@25)
   - Created vitest.config.ts with 80% coverage thresholds
   - Added test setup with Next.js navigation mocks and next-themes mock
   - Created Supabase client mocks with mock drift data
   - Added test scripts to package.json (test, test:ui, test:coverage, test:run)
-  - Verified setup with example tests (2 passing)
+  - Created drift-table.test.tsx with 7 comprehensive tests
   - Foundation for frontend testing enabling component, hook, and integration tests
+
+- [x] ToastContainer component tests (TEST-003) - Feb 18, 2026
+  - Created frontend/tests/components/toast.test.tsx with 7 comprehensive tests
+  - Test toast rendering with ARIA attributes (role="alert", aria-live, aria-atomic)
+  - Test auto-dismiss functionality with configurable duration
+  - Test manual dismiss with close button interaction
+  - Test correct icon rendering for all 4 toast types (success, error, warning, info)
+  - Test empty container state when no toasts present
+  - Test useToast hook: add and dismiss toasts correctly
+  - Test useToast hook: handle multiple toasts with proper ordering
+  - All 16 frontend tests passing (drift-table: 7, toast: 7, example: 2)
+
+- [x] SummaryCards component tests (TEST-004) - Feb 20, 2026
+  - Created frontend/tests/components/summary-cards.test.tsx with 3 comprehensive tests
+  - Test rendering with correct drift counts (total, critical, high, medium, low, unacknowledged)
+  - Test empty state showing all zeros when no drifts present
+  - Test accurate severity calculation across multiple drift types
+  - Verify grid layout renders all 5 summary cards correctly
+  - All 19 frontend tests passing (drift-table: 7, toast: 7, summary-cards: 3, example: 2)
 
 - [x] DriftTable component tests (TEST-002) - Feb 21, 2026
   - Created frontend/tests/components/drift-table.test.tsx with 7 comprehensive tests
@@ -331,6 +350,42 @@ System is deployed and running in production. EventBridge schedulers are active 
   - All 9 tests passing (2 example + 7 DriftTable)
   - Frontend build successful with no TypeScript errors
   - Test coverage includes user interactions, loading states, and accessibility attributes
+
+- [x] Navigation component tests (TEST-005) - Feb 16, 2026
+  - Created frontend/tests/components/navigation.test.tsx with 6 comprehensive tests
+  - Test 1: Renders all navigation links correctly (Dashboard, Drifts, Baselines, Trends)
+  - Test 2: Shows active state for current route (aws-orange styling, bottom indicator)
+  - Test 3: Shows active state for nested routes (e.g., /drifts/rds shows Drifts as active)
+  - Test 4: Opens mobile menu when hamburger button clicked
+  - Test 5: Renders theme toggle button
+  - Test 6: Home link only active on exact match (not on nested routes)
+  - All 25 tests passing (2 example + 3 summary-cards + 7 toast + 7 drift-table + 6 navigation)
+  - Frontend build successful with no TypeScript errors
+  - Test coverage includes link rendering, active state logic, mobile menu, theme toggle
+
+- [x] useDrifts hook tests (TEST-006) - Feb 17, 2026
+  - Created frontend/tests/hooks/use-drifts.test.tsx with 8 comprehensive tests
+  - Test 1: Fetches drifts successfully from Supabase
+  - Test 2: Applies severity filter correctly (filters by severity field)
+  - Test 3: Applies type filter correctly (filters by resource_type field)
+  - Test 4: Applies acknowledged filter correctly (converts string to boolean)
+  - Test 5: Applies custom limit correctly (pagination control)
+  - Test 6: Handles errors correctly (returns error state)
+  - Test 7: Uses query caching with correct staleTime (30 seconds)
+  - Test 8: Supports refetch functionality (manual refresh)
+  - All 33 tests passing (6 component tests + 8 hook tests + 19 others)
+  - Frontend build successful with no TypeScript errors
+  - Test coverage includes React Query integration, filter logic, error handling, caching
+
+- [x] useAcknowledgeDrift mutation tests (TEST-007) - Feb 19, 2026
+  - Created frontend/tests/hooks/use-acknowledge-drift.test.tsx with 4 comprehensive tests
+  - Test 1: Acknowledges drift successfully (mutation completes, data updated)
+  - Test 2: Performs optimistic update and updates cache (cache management)
+  - Test 3: Handles errors correctly (error state propagation)
+  - Test 4: Invalidates queries after successful mutation (cache invalidation)
+  - All 41 tests passing (8 component tests + 12 hook tests + 21 others)
+  - Frontend build successful with no TypeScript errors
+  - Test coverage includes mutation hooks, optimistic updates, error handling, cache invalidation
 
 ### CloudWatch Monitoring (Mar 2026)
 - [x] Enhanced Lambda structured logging (MON-001) - Mar 1, 2026
