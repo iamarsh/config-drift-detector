@@ -338,6 +338,17 @@ System is deployed and running in production. EventBridge schedulers are active 
   - Verify grid layout renders all 5 summary cards correctly
   - All 19 frontend tests passing (drift-table: 7, toast: 7, summary-cards: 3, example: 2)
 
+- [x] WebSocket integration tests (TEST-008) - Feb 19, 2026
+  - Created frontend/tests/integration/websocket.test.tsx with 4 comprehensive tests
+  - Test WebSocket subscription setup on component mount
+  - Test drift_events_changes_dashboard channel creation with proper event handlers
+  - Test INSERT and UPDATE postgres_changes event handlers registration
+  - Test adding new drifts to React Query cache on INSERT events
+  - Test toast notifications display for HIGH/CRITICAL severity drifts
+  - Test no toast for MEDIUM/LOW severity drifts
+  - Test WebSocket cleanup (removeChannel) on component unmount
+  - All 37 frontend tests passing (drift-table: 7, toast: 7, summary-cards: 3, use-drifts: 8, navigation: 6, websocket: 4, example: 2)
+
 - [x] DriftTable component tests (TEST-002) - Feb 21, 2026
   - Created frontend/tests/components/drift-table.test.tsx with 7 comprehensive tests
   - Test 1: Renders drift events correctly (resource IDs, types, change types, severity, status)
@@ -386,6 +397,20 @@ System is deployed and running in production. EventBridge schedulers are active 
   - All 41 tests passing (8 component tests + 12 hook tests + 21 others)
   - Frontend build successful with no TypeScript errors
   - Test coverage includes mutation hooks, optimistic updates, error handling, cache invalidation
+
+- [x] Setup Playwright for E2E testing (TEST-009) - Feb 20, 2026
+  - Installed @playwright/test dependency for cross-browser testing framework
+  - Created playwright.config.ts with comprehensive browser configurations
+  - Configured Chromium, Firefox, and WebKit browser projects
+  - Set 1920x1080 viewport and America/New_York timezone for consistent test environments
+  - Configured HTML and list reporters for test results
+  - Added screenshot and video capture on test failures for debugging
+  - Created frontend/e2e/setup.ts with test database seeding utilities
+  - Added 5 mock drift events covering all severity levels (CRITICAL, HIGH, MEDIUM, LOW)
+  - Added seedTestData(), cleanupTestData(), and waitForDatabase() helper functions
+  - Installed browser binaries: Chromium 145.0.7632.6, Firefox 146.0.1, WebKit 26.0
+  - All 41 tests passing, frontend build successful
+  - Foundation for E2E testing enabling cross-browser validation of user flows
 
 ### CloudWatch Monitoring (Mar 2026)
 - [x] Enhanced Lambda structured logging (MON-001) - Mar 1, 2026

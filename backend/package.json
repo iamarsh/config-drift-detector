@@ -19,6 +19,7 @@
   "devDependencies": {
     "@aws-sdk/client-ec2": "^3.980.0",
     "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/client-sqs": "^3.995.0",
     "@types/node": "^20.17.9",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
